@@ -4,5 +4,8 @@
     "module": "nodenext",
     "strict": true,
     "skipLibCheck": true
-  }
+  },
+  "files": [
+    "server.ts"
+  ]
 }
