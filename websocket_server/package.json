@@ -3,9 +3,11 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev": "npm run build && npm start"
+    "dev": "npm run build && npm start",
+    "format": "prettier --write server.ts"
   },
   "devDependencies": {
+    "prettier": "^3.5.3",
     "typescript": "^5.8.3"
   },
   "dependencies": {
