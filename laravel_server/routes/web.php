@@ -5,9 +5,13 @@ use Inertia\Inertia;
 use App\Models\User;
 use Illuminate\Http\Request;
 
+// Route::get('/', function () {
+//     return Inertia::render('welcome');
+// })->name('home');
+
 Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
+    return Inertia::render('main');
+})->name('main');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard', function () {
