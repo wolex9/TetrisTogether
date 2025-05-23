@@ -3,6 +3,7 @@ import { router, useForm, usePage } from "@inertiajs/react";
 import { useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import axios from 'axios';
+import { useAuth } from "@/hooks/use-auth";
 
 import {
     Card,
@@ -258,7 +259,7 @@ const RegisterForm = ({ username, registerData, setRegisterData, processing, err
 );
 
 export default function ConfirmLogin({ children }) {
-    const { auth } = usePage<SharedData>().props;
+    const { isAuthenticated, user, setAnonymous } = useAuth();
     const [confirmedLogin, setConfirmedLogin] = useState(false);
     const [step, setStep] = useState("username"); // "username", "password", "not-found", or "register"
 
@@ -303,17 +304,6 @@ export default function ConfirmLogin({ children }) {
                 setStep("not-found");
             }
         })
-
-        // post(route('check-username'), {
-        //     onSuccess: (response) => {
-        //         console.log(response);
-        //         if (response.props.userExists) {
-        //             setStep("password");
-        //         } else {
-        //             setStep("not-found");
-        //         }
-        //     },
-        // });
     }
 
     const handleLogin = (e) => {
@@ -358,14 +348,15 @@ export default function ConfirmLogin({ children }) {
     }
 
     const stayAnonymous = () => {
-        // Allow user to continue without login
+        // Set the anonymous username and continue
+        setAnonymous(data.username);
         handleLoginConfirmation();
     }
 
     if (confirmedLogin) return <div>{children}</div>;
 
     // Use the appropriate component based on state
-    if (auth.user) {
+    if (isAuthenticated) {
         return (
             <LoggedInView
                 onJoin={handleLoginConfirmation}
