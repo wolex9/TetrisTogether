@@ -411,7 +411,7 @@ class TetrisGame {
   private gameOver = false;
   private isPaused = false;
   private onStateChange: () => void;
-  private pieceGenerator: Generator<TetrominoType, never, unknown>;
+  private pieceGenerator!: Generator<TetrominoType, never, unknown>;
   private seed: number;
   private queueSize = 5; // Number of pieces to show in the queue
 
@@ -636,7 +636,7 @@ class TetrisGame {
 
 export default function TetrisGameOOP() {
   const [, forceUpdate] = useState({});
-  const gameRef = useRef<TetrisGame>();
+  const gameRef = useRef<TetrisGame>(null);
   const keysPressed = useRef<Set<string>>(new Set());
   const lastMoveTime = useRef<{ [key: string]: number }>({});
 
