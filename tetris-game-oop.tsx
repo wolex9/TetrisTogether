@@ -415,7 +415,7 @@ class TetrisGame {
   private seed: number;
   private queueSize = 5; // Number of pieces to show in the queue
 
-  constructor(onStateChange: () => void, initialSeed = 42) {
+  constructor(onStateChange: () => void, initialSeed: number) {
     this.board = new GameBoard();
     this.onStateChange = onStateChange;
     this.seed = initialSeed;
@@ -558,25 +558,6 @@ class TetrisGame {
     this.onStateChange();
   }
 
-  restart(): void {
-    this.board.reset();
-    this.currentPiece = null;
-    this.heldPiece = null;
-    this.nextPieces = [];
-    this.canHold = true;
-    this.score = 0;
-    this.lines = 0;
-    this.gameOver = false;
-    this.isPaused = false;
-
-    // Increment seed for new game
-    this.seed += 1;
-    this.initializePieceGenerator();
-    this.fillQueue();
-
-    this.start();
-  }
-
   // Getters for React component
   getDisplayBoard(): (string | null)[][] {
     const displayBoard = this.board.getBoard();
@@ -636,14 +617,19 @@ class TetrisGame {
 
 export default function TetrisGameOOP() {
   const [, forceUpdate] = useState({});
-  const gameRef = useRef<TetrisGame>(null);
+  const gameRef = useRef<TetrisGame>(null!);
   const keysPressed = useRef<Set<string>>(new Set());
   const lastMoveTime = useRef<{ [key: string]: number }>({});
 
-  // Initialize game
-  if (!gameRef.current) {
-    gameRef.current = new TetrisGame(() => forceUpdate({}));
+  const restartGame = () => {
+    const currentSeed = gameRef.current?.getSeed() ?? 42;
+    gameRef.current = new TetrisGame(() => forceUpdate({}), currentSeed + 1);
     gameRef.current.start();
+  };
+
+  // Initialize game on first render
+  if (!gameRef.current) {
+    restartGame();
   }
 
   const game = gameRef.current;
@@ -886,7 +872,7 @@ export default function TetrisGameOOP() {
             <Button onClick={() => game.pause()} className="w-full">
               {game.isPausedState() ? "Resume" : "Pause"}
             </Button>
-            <Button onClick={() => game.restart()} className="w-full">
+            <Button onClick={restartGame} className="w-full">
               Restart
             </Button>
           </div>
