@@ -836,7 +836,7 @@ export default function TetrisGameOOP() {
     <div className="flex gap-4 p-4">
       <Card>
         <CardHeader>
-          <CardTitle>Tetris (7-Bag)</CardTitle>
+          <CardTitle>Tetris</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="inline-block border-2 border-gray-400">{renderBoard()}</div>
@@ -845,13 +845,13 @@ export default function TetrisGameOOP() {
 
       <div className="space-y-4">
         <Card className="w-24">
-          <CardHeader className="p-3">
+          <CardHeader className="px-3">
             <CardTitle className="text-sm">Hold</CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">{renderHoldPiece()}</CardContent>
         </Card>
         <Card className="w-24">
-          <CardHeader className="p-3">
+          <CardHeader className="px-3">
             <CardTitle className="text-sm">Next</CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">{renderNextPieces()}</CardContent>
@@ -881,8 +881,8 @@ export default function TetrisGameOOP() {
 
           <div className="space-y-1 text-sm">
             <div>Controls:</div>
-            <div>← → Move (hold)</div>
-            <div>↓ Soft drop (hold)</div>
+            <div>← → Move</div>
+            <div>↓ Soft drop</div>
             <div>↑ X: Rotate CW</div>
             <div>Z: Rotate CCW</div>
             <div>Space: Hard drop</div>
