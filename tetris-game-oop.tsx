@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "./lib/utils";
 
 // Bag Randomizer System
 function rotl(x: number, k: number): number {
@@ -761,9 +762,11 @@ export default function TetrisGameOOP() {
         {row.map((cell, x) => (
           <div
             key={x}
-            className={`h-6 w-6 border border-gray-300 ${
-              y < BUFFER_ROWS ? "border-dashed border-gray-200" : ""
-            }${cell === "ghost" ? "bg-gray-500" : cell || "bg-gray-100"}`}
+            className={cn(
+              "h-6 w-6 border border-gray-300",
+              y < BUFFER_ROWS && "border-dashed border-gray-200",
+              cell === "ghost" ? "bg-gray-500" : cell || "bg-gray-100",
+            )}
           />
         ))}
       </div>
