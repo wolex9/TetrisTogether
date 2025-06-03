@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import TetrisGame from "../tetris-game-oop"
+import TetrisGame from "../tetris-game-oop";
 
 export default function Home() {
   return (
