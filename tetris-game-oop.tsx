@@ -617,7 +617,7 @@ class TetrisGame {
 
 export default function TetrisGameOOP() {
   const [, forceUpdate] = useState({});
-  const gameRef = useRef<TetrisGame>(null!);
+  const gameRef = useRef<TetrisGame>(null);
   const keysPressed = useRef<Set<string>>(new Set());
   const lastMoveTime = useRef<{ [key: string]: number }>({});
 
@@ -632,7 +632,7 @@ export default function TetrisGameOOP() {
     restartGame();
   }
 
-  const game = gameRef.current;
+  const game = gameRef.current!;
 
   // Handle keyboard input with key state tracking
   useEffect(() => {
