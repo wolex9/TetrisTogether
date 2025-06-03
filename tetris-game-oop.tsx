@@ -703,45 +703,31 @@ export default function TetrisGameOOP() {
 
   // Handle continuous key presses (movement)
   useEffect(() => {
+    const MOVE_DELAY = 100; // milliseconds between moves
+    const SOFT_DROP_DELAY = 50; // faster for soft drop
+
+    const movementKeys = [
+      { key: "ArrowLeft", action: () => game.movePiece(-1, 0), delay: MOVE_DELAY },
+      { key: "ArrowRight", action: () => game.movePiece(1, 0), delay: MOVE_DELAY },
+      { key: "ArrowDown", action: () => game.movePiece(0, 1), delay: SOFT_DROP_DELAY },
+    ];
+
     const handleContinuousInput = () => {
       const now = Date.now();
-      const moveDelay = 100; // milliseconds between moves
-      const initialDelay = 200; // initial delay before repeating
 
-      // Check for movement keys
-      if (keysPressed.current.has("ArrowLeft")) {
-        const lastTime = lastMoveTime.current["ArrowLeft"] || 0;
-        const delay = lastTime === 0 ? 0 : moveDelay; // No delay for first press
-        if (now - lastTime >= delay) {
-          if (game.movePiece(-1, 0)) {
-            lastMoveTime.current["ArrowLeft"] = now;
+      movementKeys.forEach(({ key, action, delay }) => {
+        if (keysPressed.current.has(key)) {
+          const lastTime = lastMoveTime.current[key] || 0;
+          const shouldMove = lastTime === 0 || now - lastTime >= delay;
+
+          if (shouldMove && action()) {
+            lastMoveTime.current[key] = now;
           }
         }
-      }
-
-      if (keysPressed.current.has("ArrowRight")) {
-        const lastTime = lastMoveTime.current["ArrowRight"] || 0;
-        const delay = lastTime === 0 ? 0 : moveDelay;
-        if (now - lastTime >= delay) {
-          if (game.movePiece(1, 0)) {
-            lastMoveTime.current["ArrowRight"] = now;
-          }
-        }
-      }
-
-      if (keysPressed.current.has("ArrowDown")) {
-        const lastTime = lastMoveTime.current["ArrowDown"] || 0;
-        const delay = lastTime === 0 ? 0 : 50; // Faster for soft drop
-        if (now - lastTime >= delay) {
-          if (game.movePiece(0, 1)) {
-            lastMoveTime.current["ArrowDown"] = now;
-          }
-        }
-      }
+      });
     };
 
     const interval = setInterval(handleContinuousInput, 16); // ~60fps
-
     return () => clearInterval(interval);
   }, [game]);
 
