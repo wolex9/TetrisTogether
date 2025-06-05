@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "./lib/utils";
@@ -615,24 +615,31 @@ class TetrisGame {
   }
 }
 
-export default function TetrisGameOOP() {
+export function useGame(initialSeed: number) {
   const [, forceUpdate] = useState({});
   const gameRef = useRef<TetrisGame>(null);
-  const keysPressed = useRef<Set<string>>(new Set());
-  const lastMoveTime = useRef<{ [key: string]: number }>({});
 
-  const restartGame = () => {
-    const currentSeed = gameRef.current?.getSeed() ?? 42;
+  const restartGame = useCallback(() => {
+    const currentSeed = gameRef.current?.getSeed() ?? initialSeed;
     gameRef.current = new TetrisGame(() => forceUpdate({}), currentSeed + 1);
     gameRef.current.start();
-  };
+  }, [initialSeed]);
 
   // Initialize game on first render
   if (!gameRef.current) {
     restartGame();
   }
 
-  const game = gameRef.current!;
+  return {
+    game: gameRef.current!,
+    restartGame,
+  };
+}
+
+export default function TetrisGameOOP() {
+  const { game, restartGame } = useGame(42);
+  const keysPressed = useRef<Set<string>>(new Set());
+  const lastMoveTime = useRef<{ [key: string]: number }>({});
 
   // Handle keyboard input with key state tracking
   useEffect(() => {
