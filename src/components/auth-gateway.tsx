@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, ReactNode } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { checkUserExists, loginUser, registerUser, getCurrentUser, logout } from "@/lib/auth";
+import { checkUserExists, loginUser, registerUser, getCurrentUser, logout } from "@/auth/actions";
 import { createAnonymousUser, type AuthUser } from "@/lib/auth-types";
 import { AuthProvider } from "@/lib/auth-context";
 import { UsernameForm } from "@/components/auth/username-form";

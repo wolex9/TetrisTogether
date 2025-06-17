@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, ReactNode } from "react";
-import { logout as serverLogout } from "@/lib/auth";
+import { logout as serverLogout } from "@/auth/actions";
 import type { AuthUser } from "@/lib/auth-types";
 
 interface AuthContextType {
