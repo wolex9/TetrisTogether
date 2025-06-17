@@ -114,6 +114,7 @@ export default function AuthGateway({ children }: { children: ReactNode }) {
       setIsGuest(false);
     } finally {
       setLoading(false);
+      setStep("username");
     }
   };
 
