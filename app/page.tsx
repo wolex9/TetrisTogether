@@ -1,25 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import TetrisGame from "../tetris-game-oop";
-import AuthGateway from "../components/auth-gateway";
-import { logout } from "../lib/auth-actions";
+import { useAuth } from "../lib/auth-context";
 
 export default function Home() {
-  const [user, setUser] = useState<{ username: string; email?: string } | null>(null);
-
-  const handleAuthenticated = (authenticatedUser: { username: string; email?: string }) => {
-    setUser(authenticatedUser);
-  };
-
-  const handleSignOut = async () => {
-    await logout();
-    setUser(null);
-  };
-
-  if (!user) {
-    return <AuthGateway onAuthenticated={handleAuthenticated} />;
-  }
+  const { user, logout } = useAuth();
 
   return (
     <main className="min-h-screen">
@@ -30,7 +15,7 @@ export default function Home() {
             {user.email && <p className="text-sm text-gray-600">{user.email}</p>}
           </div>
           <button
-            onClick={handleSignOut}
+            onClick={logout}
             className="rounded-md bg-gray-200 px-4 py-2 text-sm transition-colors hover:bg-gray-300"
           >
             Sign Out

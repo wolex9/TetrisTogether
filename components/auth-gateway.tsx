@@ -4,41 +4,28 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  checkUserExists,
-  loginUser,
-  registerUser,
-  createAnonymousSession,
-  getCurrentUser,
-  logout,
-} from "@/lib/auth-actions";
+import { checkUserExists, loginUser, registerUser, createAnonymousSession, logout } from "@/lib/auth-actions";
 
-type AuthStep = "loading" | "username" | "login" | "register" | "anonymous-confirm" | "authenticated";
+type AuthStep = "username" | "login" | "register" | "anonymous-confirm" | "existing-session";
 
 interface AuthGatewayProps {
   onAuthenticated: (user: { username: string; email?: string }) => void;
+  existingSession?: { username: string; email?: string } | null;
 }
 
-export default function AuthGateway({ onAuthenticated }: AuthGatewayProps) {
-  const [step, setStep] = useState<AuthStep>("loading");
-  const [currentUser, setCurrentUser] = useState<{ username: string; email?: string } | null>(null);
+export default function AuthGateway({ onAuthenticated, existingSession }: AuthGatewayProps) {
+  const [step, setStep] = useState<AuthStep>("username");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Check for existing session on mount
   useEffect(() => {
-    getCurrentUser().then((user) => {
-      if (user) {
-        setCurrentUser(user);
-        setStep("authenticated");
-      } else {
-        setStep("username");
-      }
-    });
-  }, []);
+    if (existingSession) {
+      setStep("existing-session");
+    }
+  }, [existingSession]);
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +64,6 @@ export default function AuthGateway({ onAuthenticated }: AuthGatewayProps) {
     try {
       const result = await loginUser(username, password);
       if (result.success && result.user) {
-        setCurrentUser(result.user);
         onAuthenticated(result.user);
       } else {
         setError("Invalid password");
@@ -107,7 +93,6 @@ export default function AuthGateway({ onAuthenticated }: AuthGatewayProps) {
     try {
       const result = await registerUser(username, email, password);
       if (result.success && result.user) {
-        setCurrentUser(result.user);
         onAuthenticated(result.user);
       } else {
         setError("Registration failed. Username may already exist.");
@@ -123,7 +108,6 @@ export default function AuthGateway({ onAuthenticated }: AuthGatewayProps) {
     setLoading(true);
     try {
       const result = await createAnonymousSession(username);
-      setCurrentUser(result.user);
       onAuthenticated(result.user);
     } catch (err) {
       setError("Failed to create session. Please try again.");
@@ -132,20 +116,23 @@ export default function AuthGateway({ onAuthenticated }: AuthGatewayProps) {
     }
   };
 
-  const handleContinueAsUser = () => {
-    if (currentUser) {
-      onAuthenticated(currentUser);
+  const handleContinueWithExistingSession = () => {
+    if (existingSession) {
+      onAuthenticated(existingSession);
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    setCurrentUser(null);
-    setStep("username");
-    setUsername("");
-    setPassword("");
-    setEmail("");
-    setError("");
+  const handleSignOutAndUseNew = async () => {
+    try {
+      await logout();
+      setStep("username");
+      setUsername("");
+      setPassword("");
+      setEmail("");
+      setError("");
+    } catch (err) {
+      setError("Failed to sign out. Please try again.");
+    }
   };
 
   const goBack = () => {
@@ -159,38 +146,28 @@ export default function AuthGateway({ onAuthenticated }: AuthGatewayProps) {
     }
   };
 
-  // Loading state
-  if (step === "loading") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex items-center justify-center py-8">
-            <div className="text-center">
-              <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-              <p className="text-gray-600">Loading...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // If user is already authenticated, show continue option
-  if (step === "authenticated" && currentUser) {
+  // If user has existing session, show continue options
+  if (step === "existing-session" && existingSession) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Welcome Back!</CardTitle>
             <CardDescription>
-              You're already signed in as <strong>{currentUser.username}</strong>
+              You're already signed in as <strong>{existingSession.username}</strong>
+              {existingSession.email && (
+                <>
+                  <br />
+                  <span className="text-sm text-gray-500">{existingSession.email}</span>
+                </>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button onClick={handleContinueAsUser} className="w-full" size="lg">
+            <Button onClick={handleContinueWithExistingSession} className="w-full" size="lg">
               Continue to App
             </Button>
-            <Button onClick={handleLogout} variant="outline" className="w-full">
+            <Button onClick={handleSignOutAndUseNew} variant="outline" className="w-full">
               Sign Out & Use Different Account
             </Button>
           </CardContent>
