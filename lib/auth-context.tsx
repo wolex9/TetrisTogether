@@ -1,11 +1,12 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { getCurrentUser, logout as serverLogout, type User } from "@/lib/auth";
+import { getCurrentUser, logout as serverLogout } from "./auth";
+import type { AuthUser } from "./auth-types";
 import AuthGateway from "@/components/auth-gateway";
 
 interface AuthContextType {
-  user: User;
+  user: AuthUser;
   logout: () => Promise<void>;
 }
 
@@ -16,7 +17,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -27,11 +28,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const handleLogout = async () => {
-    await serverLogout();
+    if (user?.id !== "anonymous") {
+      await serverLogout();
+    }
     setUser(null);
   };
 
-  const handleAuthenticated = (authenticatedUser: User) => {
+  const handleAuthenticated = (authenticatedUser: AuthUser) => {
     setUser(authenticatedUser);
   };
 

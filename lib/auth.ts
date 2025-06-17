@@ -3,16 +3,10 @@
 import { cookies } from "next/headers";
 import { randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
-import { sql } from "@/lib/db";
+import { sql } from "./db";
+import type { User } from "./auth-types";
 
 const scryptAsync = promisify(scrypt);
-
-// Types
-export interface User {
-  id: number;
-  username: string;
-  email: string;
-}
 
 export interface Session {
   token: string;
