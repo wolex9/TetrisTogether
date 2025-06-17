@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "./lib/utils";
+import { cn } from "@/lib/utils";
 
 // Bag Randomizer System
 function rotl(x: number, k: number): number {

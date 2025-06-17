@@ -1,8 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { getCurrentUser, logout as serverLogout } from "./auth-actions";
-import AuthGateway from "../components/auth-gateway";
+import { getCurrentUser, logout as serverLogout } from "@/lib/auth-actions";
+import AuthGateway from "@/components/auth-gateway";
 
 interface User {
   username: string;

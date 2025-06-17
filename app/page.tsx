@@ -1,7 +1,7 @@
 "use client";
 
-import TetrisGame from "../tetris-game-oop";
-import { useAuth } from "../lib/auth-context";
+import TetrisGame from "@/tetris-game-oop";
+import { useAuth } from "@/lib/auth-context";
 
 export default function Home() {
   const { user, logout } = useAuth();
