@@ -1,13 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { getCurrentUser, logout as serverLogout } from "@/lib/auth-actions";
+import { getCurrentUser, logout as serverLogout, type User } from "@/lib/auth";
 import AuthGateway from "@/components/auth-gateway";
-
-interface User {
-  username: string;
-  email?: string;
-}
 
 interface AuthContextType {
   user: User;
@@ -23,11 +18,10 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentSession, setCurrentSession] = useState<User | null>(null);
 
   useEffect(() => {
     getCurrentUser().then((userData) => {
-      setCurrentSession(userData);
+      setUser(userData);
       setIsLoading(false);
     });
   }, []);
@@ -35,7 +29,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const handleLogout = async () => {
     await serverLogout();
     setUser(null);
-    setCurrentSession(null);
   };
 
   const handleAuthenticated = (authenticatedUser: User) => {
@@ -51,7 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   if (!user) {
-    return <AuthGateway onAuthenticated={handleAuthenticated} existingSession={currentSession} />;
+    return <AuthGateway onAuthenticated={handleAuthenticated} />;
   }
 
   return <AuthContext.Provider value={{ user, logout: handleLogout }}>{children}</AuthContext.Provider>;

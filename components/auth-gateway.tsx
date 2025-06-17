@@ -1,31 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { checkUserExists, loginUser, registerUser, createAnonymousSession, logout } from "@/lib/auth-actions";
+import { checkUserExists, loginUser, registerUser, type User } from "@/lib/auth";
 
-type AuthStep = "username" | "login" | "register" | "anonymous-confirm" | "existing-session";
+type AuthStep = "username" | "login" | "register";
 
 interface AuthGatewayProps {
-  onAuthenticated: (user: { username: string; email?: string }) => void;
-  existingSession?: { username: string; email?: string } | null;
+  onAuthenticated: (user: User) => void;
 }
 
-export default function AuthGateway({ onAuthenticated, existingSession }: AuthGatewayProps) {
+export default function AuthGateway({ onAuthenticated }: AuthGatewayProps) {
   const [step, setStep] = useState<AuthStep>("username");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (existingSession) {
-      setStep("existing-session");
-    }
-  }, [existingSession]);
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +37,7 @@ export default function AuthGateway({ onAuthenticated, existingSession }: AuthGa
       } else {
         setStep("register");
       }
-    } catch (err) {
+    } catch {
       setError("Failed to check user. Please try again.");
     } finally {
       setLoading(false);
@@ -68,7 +61,7 @@ export default function AuthGateway({ onAuthenticated, existingSession }: AuthGa
       } else {
         setError("Invalid password");
       }
-    } catch (err) {
+    } catch {
       setError("Login failed. Please try again.");
     } finally {
       setLoading(false);
@@ -97,41 +90,10 @@ export default function AuthGateway({ onAuthenticated, existingSession }: AuthGa
       } else {
         setError("Registration failed. Username may already exist.");
       }
-    } catch (err) {
+    } catch {
       setError("Registration failed. Please try again.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleAnonymousLogin = async () => {
-    setLoading(true);
-    try {
-      const result = await createAnonymousSession(username);
-      onAuthenticated(result.user);
-    } catch (err) {
-      setError("Failed to create session. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleContinueWithExistingSession = () => {
-    if (existingSession) {
-      onAuthenticated(existingSession);
-    }
-  };
-
-  const handleSignOutAndUseNew = async () => {
-    try {
-      await logout();
-      setStep("username");
-      setUsername("");
-      setPassword("");
-      setEmail("");
-      setError("");
-    } catch (err) {
-      setError("Failed to sign out. Please try again.");
     }
   };
 
@@ -141,56 +103,22 @@ export default function AuthGateway({ onAuthenticated, existingSession }: AuthGa
     setEmail("");
     if (step === "login" || step === "register") {
       setStep("username");
-    } else if (step === "anonymous-confirm") {
-      setStep("register");
     }
   };
-
-  // If user has existing session, show continue options
-  if (step === "existing-session" && existingSession) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome Back!</CardTitle>
-            <CardDescription>
-              You're already signed in as <strong>{existingSession.username}</strong>
-              {existingSession.email && (
-                <>
-                  <br />
-                  <span className="text-sm text-gray-500">{existingSession.email}</span>
-                </>
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button onClick={handleContinueWithExistingSession} className="w-full" size="lg">
-              Continue to App
-            </Button>
-            <Button onClick={handleSignOutAndUseNew} variant="outline" className="w-full">
-              Sign Out & Use Different Account
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">
-            {step === "username" && "Enter Username"}
-            {step === "login" && "Welcome Back"}
-            {step === "register" && "Create Account"}
-            {step === "anonymous-confirm" && "Continue Anonymously"}
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold">
+            {step === "username" && "Welcome to Tetris"}
+            {step === "login" && `Welcome back, ${username}!`}
+            {step === "register" && `Create account for ${username}`}
           </CardTitle>
           <CardDescription>
-            {step === "username" && "Enter your username to continue"}
-            {step === "login" && `Hi ${username}! Please enter your password`}
-            {step === "register" && `Hi ${username}! Let's create your account`}
-            {step === "anonymous-confirm" && `Continue as ${username} without saving your data?`}
+            {step === "username" && "Enter your username to get started"}
+            {step === "login" && "Enter your password to continue"}
+            {step === "register" && "Create a new account to save your progress"}
           </CardDescription>
         </CardHeader>
 
@@ -248,74 +176,41 @@ export default function AuthGateway({ onAuthenticated, existingSession }: AuthGa
 
           {/* Register Step */}
           {step === "register" && (
-            <div className="space-y-4">
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div>
-                  <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    disabled={loading}
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <label htmlFor="register-password" className="mb-1 block text-sm font-medium text-gray-700">
-                    Password
-                  </label>
-                  <Input
-                    id="register-password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Create a password (min 6 characters)"
-                    disabled={loading}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading} size="lg">
-                  {loading ? "Creating Account..." : "Create Account"}
-                </Button>
-              </form>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">Or</span>
-                </div>
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  disabled={loading}
+                  autoFocus
+                />
               </div>
-
-              <Button onClick={() => setStep("anonymous-confirm")} variant="outline" className="w-full">
-                Continue Without Account
+              <div>
+                <label htmlFor="register-password" className="mb-1 block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <Input
+                  id="register-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create a password (min 6 characters)"
+                  disabled={loading}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading} size="lg">
+                {loading ? "Creating Account..." : "Create Account"}
               </Button>
-
-              <Button type="button" onClick={goBack} variant="ghost" className="w-full">
+              <Button type="button" onClick={goBack} variant="outline" className="w-full">
                 Back to Username
               </Button>
-            </div>
-          )}
-
-          {/* Anonymous Confirmation Step */}
-          {step === "anonymous-confirm" && (
-            <div className="space-y-4">
-              <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> Your progress and data won't be saved when continuing anonymously.
-                </p>
-              </div>
-              <Button onClick={handleAnonymousLogin} className="w-full" size="lg" disabled={loading}>
-                {loading ? "Creating Session..." : `Yes, Continue as ${username}`}
-              </Button>
-              <Button onClick={goBack} variant="outline" className="w-full">
-                Back to Registration
-              </Button>
-            </div>
+            </form>
           )}
         </CardContent>
       </Card>
