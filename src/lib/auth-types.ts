@@ -13,10 +13,3 @@ export interface AnonymousUser {
 }
 
 export type AuthUser = User | AnonymousUser;
-
-export function createAnonymousUser(username: string): AnonymousUser {
-  return {
-    id: "anonymous",
-    username,
-  };
-}
