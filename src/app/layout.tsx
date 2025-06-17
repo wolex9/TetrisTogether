@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
-import { Geist_Mono } from "next/font/google";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import AuthGateway from "@/components/auth-gateway";
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "tg",
@@ -20,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={geistMono.className}>
+      <body className={GeistMono.className}>
         <AuthGateway>{children}</AuthGateway>
       </body>
     </html>
