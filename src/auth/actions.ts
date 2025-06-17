@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import type { User } from "@/lib/auth-types";
+import type { User } from "@/lib/auth-context";
 import { hashPassword, verifyPassword, SESSION_COOKIE, SESSION_DURATION } from "@/auth/utils";
 import {
   findUserByUsername,

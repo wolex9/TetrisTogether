@@ -1,10 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import type { AuthUser } from "@/lib/auth-types";
+import type { User } from "@/lib/auth-context";
 
 interface ExistingSessionProps {
-  user: AuthUser;
+  user: User;
   onContinue: () => void;
   onSignOut: () => void;
   loading?: boolean;
@@ -16,8 +16,7 @@ export function ExistingSession({ user, onContinue, onSignOut, loading }: Existi
       <div className="text-center">
         <p className="mb-2 text-sm text-gray-600">You&apos;re already signed in as</p>
         <p className="text-lg font-semibold">{user.username}</p>
-        {user.id !== "anonymous" && user.email && <p className="text-sm text-gray-500">{user.email}</p>}
-        {user.id === "anonymous" && <p className="text-sm text-yellow-600">(Guest mode)</p>}
+        {/* Guest mode is handled by AuthProvider via isGuest flag */}
       </div>
 
       <Button onClick={onContinue} className="w-full" size="lg" disabled={loading}>

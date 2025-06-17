@@ -2,30 +2,35 @@
 
 import { createContext, useContext, ReactNode } from "react";
 import { logout as serverLogout } from "@/auth/actions";
-import type { AuthUser } from "@/lib/auth-types";
+
+export interface User {
+  id: number;
+  username: string;
+}
 
 interface AuthContextType {
-  user: AuthUser;
+  user: User;
+  isGuest: boolean;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 interface AuthProviderProps {
-  user: AuthUser;
+  user: User;
+  isGuest: boolean;
   children: ReactNode;
 }
 
-export function AuthProvider({ user, children }: AuthProviderProps) {
+export function AuthProvider({ user, isGuest, children }: AuthProviderProps) {
   const handleLogout = async () => {
-    if (user?.id !== "anonymous") {
+    if (!isGuest) {
       await serverLogout();
     }
-    // After logout, the parent (AuthGateway) will handle the redirect
     window.location.reload();
   };
 
-  return <AuthContext.Provider value={{ user, logout: handleLogout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, isGuest, logout: handleLogout }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextType {

@@ -1,12 +1,12 @@
 import { sql } from "@/lib/db";
-import type { User } from "@/lib/auth-types";
+import type { User } from "@/lib/auth-context";
 import { generateSessionToken, SESSION_DURATION } from "@/auth/utils";
 
 export async function createUser(username: string, email: string, passwordHash: string, salt: string): Promise<User> {
   const [user] = (await sql`
     INSERT INTO users (username, email, password_hash, salt)
     VALUES (${username}, ${email}, ${passwordHash}, ${salt})
-    RETURNING id, username, email
+    RETURNING id, username
   `) as [User];
 
   return user;
@@ -14,7 +14,7 @@ export async function createUser(username: string, email: string, passwordHash: 
 
 export async function findUserByUsername(username: string): Promise<User | null> {
   const [user] = (await sql`
-    SELECT id, username, email
+    SELECT id, username
     FROM users
     WHERE username = ${username}
   `) as [User?];
@@ -26,7 +26,7 @@ export async function findUserWithPassword(
   username: string,
 ): Promise<{ user: User; passwordHash: string; salt: string } | null> {
   const [result] = await sql`
-    SELECT id, username, email, password_hash, salt
+    SELECT id, username, password_hash, salt
     FROM users
     WHERE username = ${username}
   `;
@@ -34,7 +34,7 @@ export async function findUserWithPassword(
   if (!result) return null;
 
   return {
-    user: { id: result.id, username: result.username, email: result.email },
+    user: { id: result.id, username: result.username },
     passwordHash: result.password_hash,
     salt: result.salt,
   };
@@ -54,7 +54,7 @@ export async function createSession(userId: number): Promise<string> {
 
 export async function findSessionUser(token: string): Promise<User | null> {
   const [result] = (await sql`
-    SELECT u.id, u.username, u.email
+    SELECT u.id, u.username
     FROM user_sessions s
     JOIN users u ON s.user_id = u.id
     WHERE s.token = ${token} AND s.expires_at > NOW()

@@ -12,7 +12,6 @@ export default function Home() {
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold">Welcome, {user.username}!</h1>
-            {user.email && <p className="text-sm text-gray-600">{user.email}</p>}
           </div>
           <button
             onClick={logout}

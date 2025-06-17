@@ -3,8 +3,7 @@
 import { useState, useEffect, ReactNode } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { checkUserExists, loginUser, registerUser, getCurrentUser, logout } from "@/auth/actions";
-import type { AuthUser } from "@/lib/auth-types";
-import { AuthProvider } from "@/lib/auth-context";
+import { AuthProvider, type User } from "@/lib/auth-context";
 import { UsernameForm } from "@/components/auth/username-form";
 import { LoginForm } from "@/components/auth/login-form";
 import { RegisterForm } from "@/components/auth/register-form";
@@ -17,8 +16,9 @@ export default function AuthGateway({ children }: { children: ReactNode }) {
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [existingUser, setExistingUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
+  const [existingUser, setExistingUser] = useState<User | null>(null);
 
   // Check for existing session on mount
   useEffect(() => {
@@ -59,6 +59,7 @@ export default function AuthGateway({ children }: { children: ReactNode }) {
       const result = await loginUser(username, password);
       if (result.success && result.user) {
         setUser(result.user);
+        setIsGuest(false);
       } else {
         setError("Invalid password");
       }
@@ -82,6 +83,7 @@ export default function AuthGateway({ children }: { children: ReactNode }) {
       const result = await registerUser(username, email, password);
       if (result.success && result.user) {
         setUser(result.user);
+        setIsGuest(false);
       } else {
         setError("Registration failed. Username may already exist.");
       }
@@ -93,12 +95,14 @@ export default function AuthGateway({ children }: { children: ReactNode }) {
   };
 
   const handleAnonymous = () => {
-    setUser({ id: "anonymous", username });
+    setUser({ id: Date.now(), username }); // assign a temporary id
+    setIsGuest(true);
   };
 
   const handleContinueExisting = () => {
     if (existingUser) {
       setUser(existingUser);
+      setIsGuest(false);
     }
   };
 
@@ -107,11 +111,7 @@ export default function AuthGateway({ children }: { children: ReactNode }) {
     try {
       await logout();
       setExistingUser(null);
-      setStep("username");
-      setUsername("");
-      setError("");
-    } catch {
-      setError("Failed to sign out. Please try again.");
+      setIsGuest(false);
     } finally {
       setLoading(false);
     }
@@ -160,7 +160,11 @@ export default function AuthGateway({ children }: { children: ReactNode }) {
 
   // If user is authenticated, render the app with AuthProvider
   if (user) {
-    return <AuthProvider user={user}>{children}</AuthProvider>;
+    return (
+      <AuthProvider user={user} isGuest={isGuest}>
+        {children}
+      </AuthProvider>
+    );
   }
 
   if (step === "checking") {
