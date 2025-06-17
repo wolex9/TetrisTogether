@@ -3,8 +3,8 @@
 import { cookies } from "next/headers";
 import { randomBytes, scrypt } from "crypto";
 import { promisify } from "util";
-import { sql } from "./db";
-import type { User } from "./auth-types";
+import { sql } from "@/lib/db";
+import type { User } from "@/lib/auth-types";
 
 const scryptAsync = promisify(scrypt);
 

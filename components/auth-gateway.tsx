@@ -1,32 +1,30 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { checkUserExists, loginUser, registerUser, getCurrentUser, logout } from "@/lib/auth";
 import { createAnonymousUser, type AuthUser } from "@/lib/auth-types";
-import { UsernameForm } from "./auth/username-form";
-import { LoginForm } from "./auth/login-form";
-import { RegisterForm } from "./auth/register-form";
-import { ExistingSession } from "./auth/existing-session";
+import { AuthProvider } from "@/lib/auth-context";
+import { UsernameForm } from "@/components/auth/username-form";
+import { LoginForm } from "@/components/auth/login-form";
+import { RegisterForm } from "@/components/auth/register-form";
+import { ExistingSession } from "@/components/auth/existing-session";
 
 type AuthStep = "checking" | "username" | "login" | "register" | "existing";
 
-interface AuthGatewayProps {
-  onAuthenticated: (user: AuthUser) => void;
-}
-
-export default function AuthGateway({ onAuthenticated }: AuthGatewayProps) {
+export default function AuthGateway({ children }: { children: ReactNode }) {
   const [step, setStep] = useState<AuthStep>("checking");
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [existingUser, setExistingUser] = useState<AuthUser | null>(null);
 
   // Check for existing session on mount
   useEffect(() => {
-    getCurrentUser().then((user) => {
-      if (user) {
-        setExistingUser(user);
+    getCurrentUser().then((userData) => {
+      if (userData) {
+        setExistingUser(userData);
         setStep("existing");
       } else {
         setStep("username");
@@ -60,7 +58,7 @@ export default function AuthGateway({ onAuthenticated }: AuthGatewayProps) {
     try {
       const result = await loginUser(username, password);
       if (result.success && result.user) {
-        onAuthenticated(result.user);
+        setUser(result.user);
       } else {
         setError("Invalid password");
       }
@@ -83,7 +81,7 @@ export default function AuthGateway({ onAuthenticated }: AuthGatewayProps) {
     try {
       const result = await registerUser(username, email, password);
       if (result.success && result.user) {
-        onAuthenticated(result.user);
+        setUser(result.user);
       } else {
         setError("Registration failed. Username may already exist.");
       }
@@ -96,12 +94,12 @@ export default function AuthGateway({ onAuthenticated }: AuthGatewayProps) {
 
   const handleAnonymous = () => {
     const anonymousUser = createAnonymousUser(username);
-    onAuthenticated(anonymousUser);
+    setUser(anonymousUser);
   };
 
   const handleContinueExisting = () => {
     if (existingUser) {
-      onAuthenticated(existingUser);
+      setUser(existingUser);
     }
   };
 
@@ -160,6 +158,11 @@ export default function AuthGateway({ onAuthenticated }: AuthGatewayProps) {
         return "";
     }
   };
+
+  // If user is authenticated, render the app with AuthProvider
+  if (user) {
+    return <AuthProvider user={user}>{children}</AuthProvider>;
+  }
 
   if (step === "checking") {
     return (

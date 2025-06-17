@@ -1,9 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { getCurrentUser, logout as serverLogout } from "./auth";
-import type { AuthUser } from "./auth-types";
-import AuthGateway from "@/components/auth-gateway";
+import React, { createContext, useContext, ReactNode } from "react";
+import { logout as serverLogout } from "@/lib/auth";
+import type { AuthUser } from "@/lib/auth-types";
 
 interface AuthContextType {
   user: AuthUser;
@@ -13,42 +12,18 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 interface AuthProviderProps {
+  user: AuthUser;
   children: ReactNode;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    getCurrentUser().then((userData) => {
-      setUser(userData);
-      setIsLoading(false);
-    });
-  }, []);
-
+export function AuthProvider({ user, children }: AuthProviderProps) {
   const handleLogout = async () => {
     if (user?.id !== "anonymous") {
       await serverLogout();
     }
-    setUser(null);
+    // After logout, the parent (AuthGateway) will handle the redirect
+    window.location.reload();
   };
-
-  const handleAuthenticated = (authenticatedUser: AuthUser) => {
-    setUser(authenticatedUser);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <AuthGateway onAuthenticated={handleAuthenticated} />;
-  }
 
   return <AuthContext.Provider value={{ user, logout: handleLogout }}>{children}</AuthContext.Provider>;
 }
