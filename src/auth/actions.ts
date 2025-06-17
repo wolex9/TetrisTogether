@@ -10,7 +10,7 @@ import {
   createSession,
   findSessionUser,
   deleteSession,
-} from "@/auth/db";
+} from "@/auth/queries";
 
 export async function checkUserExists(username: string): Promise<boolean> {
   const user = await findUserByUsername(username);
