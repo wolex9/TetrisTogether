@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/auth-context";
@@ -27,8 +28,13 @@ export function UserHoverCard({ user, children, triggerClassName, contentClassNa
 
   return (
     <HoverCard>
-      <HoverCardTrigger className={cn("cursor-pointer font-medium hover:underline", triggerClassName)}>
-        {flag} {user.username}
+      <HoverCardTrigger asChild>
+        <Link
+          href={`/profile/${user.username}`}
+          className={cn("cursor-pointer font-medium hover:underline", triggerClassName)}
+        >
+          {flag} {user.username}
+        </Link>
       </HoverCardTrigger>
       <HoverCardContent className={cn("w-80 p-4", contentClassName)}>{children}</HoverCardContent>
     </HoverCard>
