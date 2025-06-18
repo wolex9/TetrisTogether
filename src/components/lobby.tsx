@@ -4,9 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Play } from "lucide-react";
 import LocalTetris from "./local-tetris";
 import RemoteTetris from "./remote-tetris";
 import type { ServerToClientEvents, ClientToServerEvents, RoomMember } from "@/types/socket";
+import { cn } from "@/lib/utils";
 
 interface LobbyProps {
   roomId: string;
@@ -89,39 +93,75 @@ export default function Lobby({ roomId }: LobbyProps) {
   };
 
   return (
-    <div className="lobby">
+    <div className="mx-auto flex w-full max-w-md flex-col items-center space-y-8 p-4">
       {!isConnected && (
         <div className="flex items-center justify-center p-4">
           <div className="text-sm text-gray-500">Savienojas ar istabu {roomId}...</div>
         </div>
       )}
 
-      {isConnected && (
+      {isConnected && !isGameStarted && (
         <>
-          <div className="mb-4 rounded-lg bg-white p-4 shadow-md">
-            <h3 className="mb-2 font-semibold">Istaba: {roomId}</h3>
-            <div className="text-sm text-gray-600">
-              Spēlētāji ({roomMembers.length}):{" "}
-              {roomMembers.map((m) => `${m.username}${m.isHost ? " (Saimnieks)" : ""}`).join(", ")}
-            </div>
-            {isHost && (
-              <div className="mt-2 text-xs font-medium text-blue-600">
-                🎮 Jūs esat istabas saimnieks - tikai jūs varat sākt spēli
+          {/* Game Mode Info */}
+          <Card className="w-full">
+            <CardHeader className="text-center">
+              <div className="mb-2 flex items-center justify-center gap-2">
+                <Badge className="bg-blue-500 text-white">Vairākspēlētāju</Badge>
+                <Badge variant="outline" className="border-green-500 text-green-600">
+                  {roomMembers.length} spēlētāji tiešsaistē
+                </Badge>
               </div>
-            )}
-          </div>
+              <CardTitle className="text-2xl">Spēles Vestibils</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              {/* Players List */}
+              <div className="mt-4 rounded-lg bg-gray-50 p-3">
+                <div className="mb-2 text-sm font-medium text-gray-700">Spēlētāju saraksts:</div>
+                <div className="text-sm text-gray-600">
+                  {roomMembers.map((m, index) => (
+                    <div key={m.socketId} className="flex items-center justify-between py-1">
+                      <span className={cn(m.username == user.username && "font-bold text-green-600")}>
+                        {m.username}
+                      </span>
+                      <span className="text-xs">
+                        {m.isHost && (
+                          <Badge variant="outline" className="border-blue-500 text-blue-600">
+                            Saimnieks
+                          </Badge>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          {!isGameStarted && (
-            <div className="mb-8 flex justify-center">
-              <Button onClick={handleStartGame} size="lg" className="px-12 py-6 text-xl font-bold" disabled={!isHost}>
-                {isHost ? "🚀 Sākt spēli" : "⏳ Gaida saimnieku..."}
-              </Button>
-            </div>
-          )}
+              {isHost && (
+                <div className="mt-3 rounded bg-blue-50 p-2 text-xs font-medium text-blue-600">
+                  🎮 Jūs esat istabas saimnieks
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-          {isGameStarted && renderGameComponents()}
+          {/* Big START Button */}
+          <Button
+            size="lg"
+            className="h-16 w-full bg-green-600 text-xl font-bold transition-all duration-200 hover:scale-105 hover:bg-green-700 disabled:bg-gray-400 disabled:hover:scale-100"
+            onClick={handleStartGame}
+            disabled={!isHost}
+          >
+            <Play className="mr-2 h-6 w-6" />
+            {isHost ? "SĀKT SPĒLI" : "GAIDA SAIMNIEKU"}
+          </Button>
+
+          {/* Back Button */}
+          <Button variant="outline" className="w-full" onClick={() => window.history.back()}>
+            Atpakaļ uz spēļu izvēli
+          </Button>
         </>
       )}
+
+      {isGameStarted && <div className="w-full">{renderGameComponents()}</div>}
     </div>
   );
 }
