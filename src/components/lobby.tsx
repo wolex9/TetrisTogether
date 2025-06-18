@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
 import LocalTetris from "./local-tetris";
 import RemoteTetris from "./remote-tetris";
 import type { ServerToClientEvents, ClientToServerEvents, RoomMember } from "@/types/socket";
@@ -16,7 +17,8 @@ export default function Lobby({ roomId }: LobbyProps) {
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [roomMembers, setRoomMembers] = useState<RoomMember[]>([]);
-  const [seed] = useState(() => Math.floor(Math.random() * 1000000)); // Generate lobby seed once
+  const [isGameStarted, setIsGameStarted] = useState(false);
+  const [gameSeed, setGameSeed] = useState<number | null>(null);
 
   // Set up socket connection
   useEffect(() => {
@@ -46,15 +48,28 @@ export default function Lobby({ roomId }: LobbyProps) {
       setRoomMembers((prev) => prev.filter((m) => m.socketId !== member.socketId));
     });
 
+    // Handle game start
+    socket.on("gameStarted", (data) => {
+      console.log("Received gameStarted event:", data);
+      setIsGameStarted(true);
+      setGameSeed(data.seed);
+    });
+
     return () => {
       socket.disconnect();
       socketRef.current = null;
     };
   }, [roomId, user.username]);
 
+  // Handle start game button click
+  const handleStartGame = () => {
+    console.log("Sending startGame event");
+    socketRef.current?.emit("startGame");
+  };
+
   // Render components based on room members
   const renderGameComponents = () => {
-    if (!socketRef.current || !isConnected) return null;
+    if (!socketRef.current || !isConnected || !isGameStarted || !gameSeed) return null;
 
     const currentUserSocketId = socketRef.current.id;
     const otherMembers = roomMembers.filter((member) => member.socketId !== currentUserSocketId);
@@ -62,7 +77,7 @@ export default function Lobby({ roomId }: LobbyProps) {
     return (
       <div className="flex flex-wrap gap-4">
         {/* Local player */}
-        <LocalTetris socket={socketRef.current} seed={seed} />
+        <LocalTetris socket={socketRef.current} seed={gameSeed} />
 
         {/* Remote players */}
         {otherMembers.map((member) => (
@@ -70,7 +85,7 @@ export default function Lobby({ roomId }: LobbyProps) {
             key={member.socketId}
             socket={socketRef.current!}
             targetUsername={member.username}
-            seed={seed}
+            seed={gameSeed}
           />
         ))}
       </div>
@@ -93,7 +108,16 @@ export default function Lobby({ roomId }: LobbyProps) {
               Players ({roomMembers.length}): {roomMembers.map((m) => m.username).join(", ")}
             </div>
           </div>
-          {renderGameComponents()}
+
+          {!isGameStarted && (
+            <div className="mb-8 flex justify-center">
+              <Button onClick={handleStartGame} size="lg" className="px-12 py-6 text-xl font-bold">
+                🚀 Start Game
+              </Button>
+            </div>
+          )}
+
+          {isGameStarted && renderGameComponents()}
         </>
       )}
     </div>

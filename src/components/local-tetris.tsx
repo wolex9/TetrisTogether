@@ -1,9 +1,9 @@
 "use client";
 
+import { useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GameBoard as GameBoardComponent, HoldPiece, NextPieces, GameInfo } from "@/components/tetris";
-import useKeyboardControls from "@/hooks/use-keyboard-controls";
-import { useGame } from "@/tetris-game-oop";
+import { useGame, type GameAction } from "@/tetris-game-oop";
 import { useAuth } from "@/lib/auth-context";
 import { Socket } from "socket.io-client";
 import type { ServerToClientEvents, ClientToServerEvents } from "@/types/socket";
@@ -17,14 +17,129 @@ export default function LocalTetris({ socket, seed }: LocalTetrisProps) {
   const { user } = useAuth();
   const { game, dispatch, restartGame } = useGame(seed);
 
-  // Add keyboard controls for local play with automatic game loop
-  useKeyboardControls(dispatch, game);
+  // Refs for keyboard handling
+  const keysPressed = useRef<Set<string>>(new Set());
+  const lastMoveTime = useRef<Record<string, number>>({});
+
+  // Combined dispatch function: emit to socket AND apply locally
+  const emitAndDispatch = useCallback(
+    (action: GameAction) => {
+      // Apply locally for immediate feedback
+      dispatch(action);
+      // Emit to socket for other players
+      socket?.emit("gameAction", action);
+    },
+    [dispatch, socket],
+  );
+
+  // Keyboard controls - one-time actions
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent default behavior for game keys
+      const gameKeys = ["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp", " ", "Shift", "z", "Z", "x", "X", "p", "P"];
+      if (gameKeys.includes(e.key)) {
+        e.preventDefault();
+      }
+
+      keysPressed.current.add(e.key);
+
+      switch (e.key) {
+        case "ArrowUp":
+        case "x":
+        case "X":
+          emitAndDispatch({ type: "ROTATE_PIECE", payload: { clockwise: true } });
+          break;
+        case "z":
+        case "Z":
+          emitAndDispatch({ type: "ROTATE_PIECE", payload: { clockwise: false } });
+          break;
+        case " ":
+          emitAndDispatch({ type: "HARD_DROP" });
+          break;
+        case "Shift":
+          emitAndDispatch({ type: "HOLD" });
+          break;
+        case "p":
+        case "P":
+          emitAndDispatch({ type: "PAUSE" });
+          break;
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysPressed.current.delete(e.key);
+      delete lastMoveTime.current[e.key];
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [emitAndDispatch]);
+
+  // Keyboard controls - continuous movement
+  useEffect(() => {
+    const MOVE_DELAY = 100;
+    const SOFT_DROP_DELAY = 50;
+
+    const movementKeys = [
+      {
+        key: "ArrowLeft",
+        action: () => emitAndDispatch({ type: "MOVE_PIECE", payload: { dx: -1, dy: 0 } }),
+        delay: MOVE_DELAY,
+      },
+      {
+        key: "ArrowRight",
+        action: () => emitAndDispatch({ type: "MOVE_PIECE", payload: { dx: 1, dy: 0 } }),
+        delay: MOVE_DELAY,
+      },
+      {
+        key: "ArrowDown",
+        action: () => emitAndDispatch({ type: "MOVE_PIECE", payload: { dx: 0, dy: 1 } }),
+        delay: SOFT_DROP_DELAY,
+      },
+    ];
+
+    const handleContinuousInput = () => {
+      const now = Date.now();
+      movementKeys.forEach(({ key, action, delay }) => {
+        if (keysPressed.current.has(key)) {
+          const lastTime = lastMoveTime.current[key] || 0;
+          if (lastTime === 0 || now - lastTime >= delay) {
+            action();
+            lastMoveTime.current[key] = now;
+          }
+        }
+      });
+    };
+
+    const interval = setInterval(handleContinuousInput, 16);
+    return () => clearInterval(interval);
+  }, [emitAndDispatch]);
+
+  // Game loop - emit tick as soft drop action
+  useEffect(() => {
+    if (game.isGameOver() || game.isPausedState()) return;
+
+    const interval = setInterval(
+      () => {
+        // Tick is just a soft drop - emit it so other players see the piece falling
+        emitAndDispatch({ type: "MOVE_PIECE", payload: { dx: 0, dy: 1 } });
+      },
+      Math.max(100, 1000 - game.getLines() * 50),
+    );
+
+    return () => clearInterval(interval);
+  }, [game, game.getLines(), game.isGameOver(), game.isPausedState(), emitAndDispatch]);
 
   return (
     <div className="flex gap-4 p-4">
       <Card>
         <CardHeader>
-          <CardTitle>{user.username}'s Tetris</CardTitle>
+          <CardTitle>{user.username}&apos;s Tetris</CardTitle>
         </CardHeader>
         <CardContent>
           <GameBoardComponent board={game.getDisplayBoard()} />
@@ -42,7 +157,7 @@ export default function LocalTetris({ socket, seed }: LocalTetrisProps) {
         seed={game.getSeed()}
         isPaused={game.isPausedState()}
         isGameOver={game.isGameOver()}
-        onAction={dispatch}
+        onAction={emitAndDispatch}
         onRestart={restartGame}
       />
     </div>

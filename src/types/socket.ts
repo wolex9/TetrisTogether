@@ -8,6 +8,9 @@ export interface ServerToClientEvents {
 
   // Game events - includes username to identify which player's action
   gameAction: (data: { username: string; action: GameAction }) => void;
+
+  // Game start/control
+  gameStarted: (data: { seed: number }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -16,6 +19,9 @@ export interface ClientToServerEvents {
 
   // Game events - server will add username from socket data
   gameAction: (action: GameAction) => void;
+
+  // Game start/control
+  startGame: () => void;
 }
 
 export interface InterServerEvents {

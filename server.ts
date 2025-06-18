@@ -71,6 +71,16 @@ app.prepare().then(() => {
         socket.to(roomId).emit("gameAction", { username, action });
       }
     });
+
+    // Handle start game request
+    socket.on("startGame", () => {
+      // Generate a random seed for synchronized gameplay
+      const seed = Math.floor(Math.random() * 1000000);
+      console.log(`Starting game in room ${roomId} with seed: ${seed}`);
+
+      // Broadcast game start to all players in the namespace (including sender)
+      socket.nsp.emit("gameStarted", { seed });
+    });
     socket.on("disconnect", () => {
       // Remove user from room members
       const room = roomMembers.get(roomId);

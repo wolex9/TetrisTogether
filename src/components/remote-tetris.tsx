@@ -14,7 +14,7 @@ interface RemoteTetrisProps {
 }
 
 export default function RemoteTetris({ socket, targetUsername, seed }: RemoteTetrisProps) {
-  const { game, dispatch, restartGame } = useGame(seed);
+  const { game, dispatch } = useGame(seed);
 
   // Listen for game actions from socket and dispatch them
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function RemoteTetris({ socket, targetUsername, seed }: RemoteTet
     <div className="flex gap-4 p-4">
       <Card>
         <CardHeader>
-          <CardTitle>{targetUsername}'s Tetris</CardTitle>
+          <CardTitle>{targetUsername}&apos;s Tetris</CardTitle>
         </CardHeader>
         <CardContent>
           <GameBoardComponent board={game.getDisplayBoard()} />
