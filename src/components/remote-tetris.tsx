@@ -1,29 +1,42 @@
 "use client";
 
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GameBoard as GameBoardComponent, HoldPiece, NextPieces, GameInfo } from "@/components/tetris";
-import useKeyboardControls from "@/hooks/use-keyboard-controls";
-import { useGame } from "@/tetris-game-oop";
-import { useAuth } from "@/lib/auth-context";
+import { useGame, type GameAction } from "@/tetris-game-oop";
 import { Socket } from "socket.io-client";
 
-interface LocalTetrisProps {
+interface RemoteTetrisProps {
   socket?: Socket;
+  username?: string;
   seed: number;
 }
 
-export default function LocalTetris({ socket, seed }: LocalTetrisProps) {
-  const { user } = useAuth();
+export default function RemoteTetris({ socket, username = "Remote Player", seed }: RemoteTetrisProps) {
   const { game, dispatch, restartGame } = useGame(seed);
 
-  // Add keyboard controls for local play with automatic game loop
-  useKeyboardControls(dispatch, game);
+  // Listen for game actions from socket and dispatch them
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleGameAction = (action: GameAction) => {
+      dispatch(action);
+    };
+
+    socket.on("gameAction", handleGameAction);
+
+    return () => {
+      socket.off("gameAction", handleGameAction);
+    };
+  }, [socket, dispatch]);
+
+  // No keyboard controls or game loop - only responds to socket events
 
   return (
     <div className="flex gap-4 p-4">
       <Card>
         <CardHeader>
-          <CardTitle>{user.username}'s Tetris</CardTitle>
+          <CardTitle>{username}'s Tetris</CardTitle>
         </CardHeader>
         <CardContent>
           <GameBoardComponent board={game.getDisplayBoard()} />
@@ -41,8 +54,8 @@ export default function LocalTetris({ socket, seed }: LocalTetrisProps) {
         seed={game.getSeed()}
         isPaused={game.isPausedState()}
         isGameOver={game.isGameOver()}
-        onAction={dispatch}
-        onRestart={restartGame}
+        onAction={() => {}} // No local actions allowed
+        onRestart={() => {}} // No local restart allowed
       />
     </div>
   );

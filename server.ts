@@ -17,6 +17,9 @@ app.prepare().then(() => {
     },
   });
 
+  // Store room members: roomId -> { socketId -> { username, socketId } }
+  const roomMembers = new Map<string, Map<string, { username: string; socketId: string }>>();
+
   // Handle different room namespaces
   io.of(/^\/.*$/).on("connection", (socket) => {
     const namespace = socket.nsp.name;
@@ -24,8 +27,50 @@ app.prepare().then(() => {
 
     console.log(`User connected to room: ${roomId}, socket id: ${socket.id}`);
 
+    // Initialize room if it doesn't exist
+    if (!roomMembers.has(roomId)) {
+      roomMembers.set(roomId, new Map());
+    }
+
+    // Handle user join with username
+    socket.on("join", (data: { username: string }) => {
+      const { username } = data;
+
+      // Add user to room members
+      const room = roomMembers.get(roomId)!;
+      room.set(socket.id, { username, socketId: socket.id });
+
+      // Join the socket room
+      socket.join(roomId);
+
+      console.log(`${username} joined room: ${roomId}`);
+
+      // Send current room members to the joining user
+      const members = Array.from(room.values());
+      socket.emit("roomMembers", members);
+
+      // Notify other users in the room about the new member
+      socket.to(roomId).emit("userJoined", { username, socketId: socket.id });
+    });
+
     socket.on("disconnect", () => {
-      console.log(`User disconnected from room: ${roomId}, socket id: ${socket.id}`);
+      // Remove user from room members
+      const room = roomMembers.get(roomId);
+      if (room) {
+        const user = room.get(socket.id);
+        if (user) {
+          room.delete(socket.id);
+          console.log(`${user.username} disconnected from room: ${roomId}`);
+
+          // Notify other users about the disconnection
+          socket.to(roomId).emit("userLeft", { username: user.username, socketId: socket.id });
+        }
+
+        // Clean up empty rooms
+        if (room.size === 0) {
+          roomMembers.delete(roomId);
+        }
+      }
     });
 
     // Add more game-specific events here later

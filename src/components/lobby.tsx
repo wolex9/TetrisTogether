@@ -1,16 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState, ReactNode, cloneElement, isValidElement } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
+import { useAuth } from "@/lib/auth-context";
+import LocalTetris from "./local-tetris";
+import RemoteTetris from "./remote-tetris";
 
 interface LobbyProps {
   roomId: string;
-  children: ReactNode;
 }
 
-export default function Lobby({ roomId, children }: LobbyProps) {
+interface RoomMember {
+  username: string;
+  socketId: string;
+}
+
+export default function Lobby({ roomId }: LobbyProps) {
+  const { user } = useAuth();
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [roomMembers, setRoomMembers] = useState<RoomMember[]>([]);
+  const [seed] = useState(() => Math.floor(Math.random() * 1000000)); // Generate lobby seed once
 
   // Set up socket connection
   useEffect(() => {
@@ -19,43 +29,51 @@ export default function Lobby({ roomId, children }: LobbyProps) {
 
     socket.on("connect", () => {
       setIsConnected(true);
+      // Broadcast username on join
+      socket.emit("join", { username: user.username });
     });
 
     socket.on("disconnect", () => {
       setIsConnected(false);
     });
 
+    // Handle room member updates
+    socket.on("roomMembers", (members: RoomMember[]) => {
+      setRoomMembers(members);
+    });
+
+    socket.on("userJoined", (member: RoomMember) => {
+      setRoomMembers((prev) => [...prev, member]);
+    });
+
+    socket.on("userLeft", (member: RoomMember) => {
+      setRoomMembers((prev) => prev.filter((m) => m.socketId !== member.socketId));
+    });
+
     return () => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [roomId]);
+  }, [roomId, user.username]);
 
-  // Helper function to pass socket to children
-  const renderChildrenWithSocket = (children: ReactNode): ReactNode => {
-    if (!socketRef.current || !isConnected) {
-      return children;
-    }
+  // Render components based on room members
+  const renderGameComponents = () => {
+    if (!socketRef.current || !isConnected) return null;
 
-    if (isValidElement(children)) {
-      // Clone the child element and pass the socket as a prop
-      return cloneElement(children, { socket: socketRef.current } as any);
-    }
+    const currentUserSocketId = socketRef.current.id;
+    const otherMembers = roomMembers.filter((member) => member.socketId !== currentUserSocketId);
 
-    // Handle multiple children
-    if (Array.isArray(children)) {
-      return children.map((child, index) => {
-        if (isValidElement(child)) {
-          return cloneElement(child, {
-            key: index,
-            socket: socketRef.current,
-          } as any);
-        }
-        return child;
-      });
-    }
+    return (
+      <div className="flex flex-wrap gap-4">
+        {/* Local player */}
+        <LocalTetris socket={socketRef.current} seed={seed} />
 
-    return children;
+        {/* Remote players */}
+        {otherMembers.map((member) => (
+          <RemoteTetris key={member.socketId} socket={socketRef.current!} username={member.username} seed={seed} />
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -66,7 +84,17 @@ export default function Lobby({ roomId, children }: LobbyProps) {
         </div>
       )}
 
-      {isConnected && renderChildrenWithSocket(children)}
+      {isConnected && (
+        <>
+          <div className="mb-4 rounded-lg bg-gray-100 p-4">
+            <h3 className="mb-2 font-semibold">Room: {roomId}</h3>
+            <div className="text-sm text-gray-600">
+              Players ({roomMembers.length}): {roomMembers.map((m) => m.username).join(", ")}
+            </div>
+          </div>
+          {renderGameComponents()}
+        </>
+      )}
     </div>
   );
 }
