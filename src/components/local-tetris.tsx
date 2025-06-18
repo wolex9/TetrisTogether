@@ -4,8 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GameBoard as GameBoardComponent, HoldPiece, NextPieces, GameInfo } from "@/components/tetris";
 import useKeyboardControls from "@/hooks/use-keyboard-controls";
 import { useGame } from "@/tetris-game-oop";
+import { useAuth } from "@/lib/auth-context";
+import { Socket } from "socket.io-client";
 
-export default function LocalTetris() {
+interface LocalTetrisProps {
+  socket?: Socket;
+}
+
+export default function LocalTetris({ socket }: LocalTetrisProps) {
+  const { user } = useAuth();
   const { game, dispatch, restartGame } = useGame(42);
 
   // Add keyboard controls for local play with automatic game loop
@@ -15,7 +22,7 @@ export default function LocalTetris() {
     <div className="flex gap-4 p-4">
       <Card>
         <CardHeader>
-          <CardTitle>Tetris</CardTitle>
+          <CardTitle>{user.username}'s Tetris</CardTitle>
         </CardHeader>
         <CardContent>
           <GameBoardComponent board={game.getDisplayBoard()} />
