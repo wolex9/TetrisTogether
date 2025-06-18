@@ -66,7 +66,12 @@ export default function Lobby({ roomId }: LobbyProps) {
 
         {/* Remote players */}
         {otherMembers.map((member) => (
-          <RemoteTetris key={member.socketId} socket={socketRef.current!} username={member.username} seed={seed} />
+          <RemoteTetris
+            key={member.socketId}
+            socket={socketRef.current!}
+            targetUsername={member.username}
+            seed={seed}
+          />
         ))}
       </div>
     );

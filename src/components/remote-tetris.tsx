@@ -9,20 +9,22 @@ import type { ServerToClientEvents, ClientToServerEvents } from "@/types/socket"
 
 interface RemoteTetrisProps {
   socket?: Socket<ServerToClientEvents, ClientToServerEvents>;
-  username?: string;
+  targetUsername: string; // The username of the player this component is displaying
   seed: number;
 }
 
-export default function RemoteTetris({ socket, username = "Remote Player", seed }: RemoteTetrisProps) {
+export default function RemoteTetris({ socket, targetUsername, seed }: RemoteTetrisProps) {
   const { game, dispatch, restartGame } = useGame(seed);
 
   // Listen for game actions from socket and dispatch them
   useEffect(() => {
     if (!socket) return;
 
-    // GameAction type is inferred from socket events, but we keep explicit typing for clarity
-    const handleGameAction = (action: GameAction) => {
-      dispatch(action);
+    // Handle game actions - only dispatch if the action is for this player
+    const handleGameAction = (data: { username: string; action: GameAction }) => {
+      if (data.username === targetUsername) {
+        dispatch(data.action);
+      }
     };
 
     socket.on("gameAction", handleGameAction);
@@ -30,7 +32,7 @@ export default function RemoteTetris({ socket, username = "Remote Player", seed 
     return () => {
       socket.off("gameAction", handleGameAction);
     };
-  }, [socket, dispatch]);
+  }, [socket, dispatch, targetUsername]);
 
   // No keyboard controls or game loop - only responds to socket events
 
@@ -38,7 +40,7 @@ export default function RemoteTetris({ socket, username = "Remote Player", seed 
     <div className="flex gap-4 p-4">
       <Card>
         <CardHeader>
-          <CardTitle>{username}'s Tetris</CardTitle>
+          <CardTitle>{targetUsername}'s Tetris</CardTitle>
         </CardHeader>
         <CardContent>
           <GameBoardComponent board={game.getDisplayBoard()} />

@@ -6,15 +6,15 @@ export interface ServerToClientEvents {
   userJoined: (member: RoomMember) => void;
   userLeft: (member: RoomMember) => void;
 
-  // Game events
-  gameAction: (action: GameAction) => void;
+  // Game events - includes username to identify which player's action
+  gameAction: (data: { username: string; action: GameAction }) => void;
 }
 
 export interface ClientToServerEvents {
   // Room management
   join: (data: { username: string }) => void;
 
-  // Game events
+  // Game events - server will add username from socket data
   gameAction: (action: GameAction) => void;
 }
 

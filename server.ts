@@ -65,8 +65,11 @@ app.prepare().then(() => {
 
     // Handle game actions
     socket.on("gameAction", (action) => {
-      // Broadcast the action to other users in the room
-      socket.to(roomId).emit("gameAction", action);
+      // Get username from socket data and broadcast with username attached
+      const username = socket.data.username;
+      if (username) {
+        socket.to(roomId).emit("gameAction", { username, action });
+      }
     });
     socket.on("disconnect", () => {
       // Remove user from room members
