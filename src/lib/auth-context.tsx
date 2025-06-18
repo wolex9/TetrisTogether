@@ -6,7 +6,7 @@ import { logout as serverLogout } from "@/auth/actions";
 export interface User {
   id: number;
   username: string;
-  countryCode?: string;
+  country_code?: string;
 }
 
 interface AuthContextType {

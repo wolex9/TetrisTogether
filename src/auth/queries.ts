@@ -7,11 +7,11 @@ export async function createUser(
   email: string,
   passwordHash: string,
   salt: string,
-  countryCode?: string,
+  country_code?: string,
 ): Promise<User> {
   const [user] = (await sql`
     INSERT INTO users (username, email, password_hash, salt, country_code)
-    VALUES (${username}, ${email}, ${passwordHash}, ${salt}, ${countryCode || null})
+    VALUES (${username}, ${email}, ${passwordHash}, ${salt}, ${country_code || null})
     RETURNING id, username, country_code
   `) as [User];
 
@@ -40,7 +40,7 @@ export async function findUserWithPassword(
   if (!result) return null;
 
   return {
-    user: { id: result.id, username: result.username, countryCode: result.country_code },
+    user: { id: result.id, username: result.username, country_code: result.country_code },
     passwordHash: result.password_hash,
     salt: result.salt,
   };

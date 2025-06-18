@@ -4,10 +4,10 @@ import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/h
 import { cn } from "@/lib/utils";
 import type { User } from "@/lib/auth-context";
 
-function countryCodeToFlag(countryCode?: string): string {
-  if (!countryCode) return "🌏";
+function countryCodeToFlag(country_code?: string): string {
+  if (!country_code) return "🌏";
   return String.fromCodePoint(
-    ...countryCode
+    ...country_code
       .toUpperCase()
       .split("")
       .map((char) => 127397 + char.charCodeAt(0)),
@@ -22,7 +22,8 @@ interface UserHoverCardProps {
 }
 
 export function UserHoverCard({ user, children, triggerClassName, contentClassName }: UserHoverCardProps) {
-  const flag = countryCodeToFlag(user.countryCode);
+  console.log(user);
+  const flag = countryCodeToFlag(user.country_code);
 
   return (
     <HoverCard>
