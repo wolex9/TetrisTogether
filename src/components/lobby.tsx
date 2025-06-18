@@ -75,7 +75,7 @@ export default function Lobby({ roomId }: LobbyProps) {
     const otherMembers = roomMembers.filter((member) => member.socketId !== currentUserSocketId);
 
     return (
-      <div className="flex flex-wrap gap-4">
+      <div className="flex justify-evenly gap-4 overflow-x-auto pb-4">
         {/* Local player */}
         <LocalTetris socket={socketRef.current} seed={gameSeed} />
 
@@ -93,7 +93,9 @@ export default function Lobby({ roomId }: LobbyProps) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col items-center space-y-8 p-4">
+    <div
+      className={`mx-auto flex w-full flex-col items-center space-y-8 p-4 ${isGameStarted ? "max-w-none" : "max-w-md"}`}
+    >
       {!isConnected && (
         <div className="flex items-center justify-center p-4">
           <div className="text-sm text-gray-500">Savienojas ar istabu {roomId}...</div>
@@ -161,7 +163,7 @@ export default function Lobby({ roomId }: LobbyProps) {
         </>
       )}
 
-      {isGameStarted && <div className="w-full">{renderGameComponents()}</div>}
+      {isGameStarted && renderGameComponents()}
     </div>
   );
 }
