@@ -16,18 +16,20 @@ function countryCodeToFlag(countryCode?: string): string {
 
 interface UserHoverCardProps {
   user: User;
+  children: React.ReactNode;
+  triggerClassName?: string;
   contentClassName?: string; // additional classes for the content
 }
 
-export function UserHoverCard({ user, contentClassName }: UserHoverCardProps) {
+export function UserHoverCard({ user, children, triggerClassName, contentClassName }: UserHoverCardProps) {
   const flag = countryCodeToFlag(user.countryCode);
 
   return (
     <HoverCard>
-      <HoverCardTrigger className={"cursor-pointer font-medium hover:underline"}>
+      <HoverCardTrigger className={cn("cursor-pointer font-medium hover:underline", triggerClassName)}>
         {flag} {user.username}
       </HoverCardTrigger>
-      <HoverCardContent className={cn("w-80 p-4", contentClassName)}></HoverCardContent>
+      <HoverCardContent className={cn("w-80 p-4", contentClassName)}>{children}</HoverCardContent>
     </HoverCard>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import AuthGateway from "@/components/auth-gateway";
+import { SiteHeader } from "@/components/site-header";
 
 export const metadata: Metadata = {
   title: "tg",
@@ -16,7 +17,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={GeistMono.className}>
-        <AuthGateway>{children}</AuthGateway>
+        <AuthGateway>
+          <SiteHeader />
+          <main className="min-h-screen">{children}</main>
+        </AuthGateway>
       </body>
     </html>
   );
