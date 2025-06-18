@@ -19,6 +19,7 @@ export default function Lobby({ roomId }: LobbyProps) {
   const [roomMembers, setRoomMembers] = useState<RoomMember[]>([]);
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [gameSeed, setGameSeed] = useState<number | null>(null);
+  const [isHost, setIsHost] = useState(false);
 
   // Set up socket connection
   useEffect(() => {
@@ -38,14 +39,9 @@ export default function Lobby({ roomId }: LobbyProps) {
     // Handle room member updates (types are now inferred)
     socket.on("roomMembers", (members) => {
       setRoomMembers(members);
-    });
-
-    socket.on("userJoined", (member) => {
-      setRoomMembers((prev) => [...prev, member]);
-    });
-
-    socket.on("userLeft", (member) => {
-      setRoomMembers((prev) => prev.filter((m) => m.socketId !== member.socketId));
+      // Check if current user is host
+      const currentUser = members.find((member) => member.socketId === socket.id);
+      setIsHost(currentUser?.isHost || false);
     });
 
     // Handle game start
@@ -102,17 +98,23 @@ export default function Lobby({ roomId }: LobbyProps) {
 
       {isConnected && (
         <>
-          <div className="mb-4 rounded-lg bg-gray-100 p-4">
+          <div className="mb-4 rounded-lg bg-white p-4 shadow-md">
             <h3 className="mb-2 font-semibold">Istaba: {roomId}</h3>
             <div className="text-sm text-gray-600">
-              Spēlētāji ({roomMembers.length}): {roomMembers.map((m) => m.username).join(", ")}
+              Spēlētāji ({roomMembers.length}):{" "}
+              {roomMembers.map((m) => `${m.username}${m.isHost ? " (Saimnieks)" : ""}`).join(", ")}
             </div>
+            {isHost && (
+              <div className="mt-2 text-xs font-medium text-blue-600">
+                🎮 Jūs esat istabas saimnieks - tikai jūs varat sākt spēli
+              </div>
+            )}
           </div>
 
           {!isGameStarted && (
             <div className="mb-8 flex justify-center">
-              <Button onClick={handleStartGame} size="lg" className="px-12 py-6 text-xl font-bold">
-                🚀 Sākt spēli
+              <Button onClick={handleStartGame} size="lg" className="px-12 py-6 text-xl font-bold" disabled={!isHost}>
+                {isHost ? "🚀 Sākt spēli" : "⏳ Gaida saimnieku..."}
               </Button>
             </div>
           )}

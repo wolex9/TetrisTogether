@@ -7,6 +7,7 @@ import type {
   InterServerEvents,
   SocketData,
   RoomMember,
+  Room,
 } from "./src/types/socket.js";
 
 const port = parseInt(process.env.PORT || "3000");
@@ -24,8 +25,8 @@ app.prepare().then(() => {
     },
   });
 
-  // Store room members: roomId -> { socketId -> RoomMember }
-  const roomMembers = new Map<string, Map<string, RoomMember>>();
+  // Store persistent rooms: roomId -> Room
+  const rooms = new Map<string, Room>();
 
   // Handle different room namespaces
   io.of(/^\/.*$/).on("connection", (socket) => {
@@ -34,10 +35,7 @@ app.prepare().then(() => {
 
     console.log(`User connected to room: ${roomId}, socket id: ${socket.id}`);
 
-    // Initialize room if it doesn't exist
-    if (!roomMembers.has(roomId)) {
-      roomMembers.set(roomId, new Map());
-    } // Handle user join with username
+    // Handle user join with username
     socket.on("join", (data) => {
       const { username } = data;
 
@@ -45,22 +43,35 @@ app.prepare().then(() => {
       socket.data.username = username;
       socket.data.roomId = roomId;
 
+      // Initialize room if it doesn't exist or add user to existing room
+      let room = rooms.get(roomId);
+      const isFirstUser = !room;
+
+      if (!room) {
+        room = {
+          id: roomId,
+          hostSocketId: socket.id,
+          members: [],
+          isGameStarted: false,
+        };
+        rooms.set(roomId, room);
+      }
+
       // Add user to room members
-      const room = roomMembers.get(roomId)!;
-      const member: RoomMember = { username, socketId: socket.id };
-      room.set(socket.id, member);
+      const member: RoomMember = {
+        username,
+        socketId: socket.id,
+        isHost: socket.id === room.hostSocketId,
+      };
+      room.members.push(member);
 
       // Join the socket room
       socket.join(roomId);
 
-      console.log(`${username} joined room: ${roomId}`);
+      console.log(`${username} joined room: ${roomId} ${isFirstUser ? "(as host)" : ""}`);
 
-      // Send current room members to the joining user
-      const members = Array.from(room.values());
-      socket.emit("roomMembers", members);
-
-      // Notify other users in the room about the new member
-      socket.to(roomId).emit("userJoined", member);
+      // Send current room members to all users in the room
+      socket.nsp.emit("roomMembers", room.members);
     });
 
     // Handle game actions
@@ -72,11 +83,29 @@ app.prepare().then(() => {
       }
     });
 
-    // Handle start game request
+    // Handle start game request (only host can start)
     socket.on("startGame", () => {
+      const room = rooms.get(roomId);
+      if (!room) return;
+
+      // Check if the requesting user is the host
+      if (socket.id !== room.hostSocketId) {
+        console.log(`Non-host ${socket.data.username} tried to start game in room ${roomId}`);
+        return;
+      }
+
+      // Check if game is already started
+      if (room.isGameStarted) {
+        console.log(`Game already started in room ${roomId}`);
+        return;
+      }
+
       // Generate a random seed for synchronized gameplay
       const seed = Math.floor(Math.random() * 1000000);
-      console.log(`Starting game in room ${roomId} with seed: ${seed}`);
+      room.isGameStarted = true;
+      room.gameSeed = seed;
+
+      console.log(`Host ${socket.data.username} starting game in room ${roomId} with seed: ${seed}`);
 
       // Broadcast game start to all players in the namespace (including sender)
       socket.nsp.emit("gameStarted", { seed });
@@ -94,23 +123,37 @@ app.prepare().then(() => {
         socket.to(roomId).emit("receiveGarbage", { lines: garbageLines });
       }
     });
+
     socket.on("disconnect", () => {
-      // Remove user from room members
-      const room = roomMembers.get(roomId);
-      if (room) {
-        const user = room.get(socket.id);
-        if (user) {
-          room.delete(socket.id);
-          console.log(`${user.username} disconnected from room: ${roomId}`);
+      const room = rooms.get(roomId);
+      if (!room) return;
 
-          // Notify other users about the disconnection
-          socket.to(roomId).emit("userLeft", user);
-        }
+      // Find and remove user from room members
+      const userIndex = room.members.findIndex((member) => member.socketId === socket.id);
+      if (userIndex === -1) return;
 
-        // Clean up empty rooms
-        if (room.size === 0) {
-          roomMembers.delete(roomId);
-        }
+      const user = room.members[userIndex];
+      room.members.splice(userIndex, 1);
+
+      console.log(`${user.username} disconnected from room: ${roomId}`);
+
+      // If this was the host and there are other members, assign new host
+      if (user.isHost && room.members.length > 0) {
+        const newHost = room.members[0];
+        newHost.isHost = true;
+        room.hostSocketId = newHost.socketId;
+        console.log(`${newHost.username} is now the host of room ${roomId}`);
+      }
+
+      // Notify other users and send updated member list
+      if (room.members.length > 0) {
+        socket.to(roomId).emit("roomMembers", room.members);
+      }
+
+      // Clean up empty rooms
+      if (room.members.length === 0) {
+        rooms.delete(roomId);
+        console.log(`Room ${roomId} deleted (empty)`);
       }
     });
 
