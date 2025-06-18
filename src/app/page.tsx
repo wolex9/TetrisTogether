@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import TetrisGame, { type GameAction } from "@/tetris-game-oop";
 import useKeyboardControls from "@/hooks/use-keyboard-controls";
 

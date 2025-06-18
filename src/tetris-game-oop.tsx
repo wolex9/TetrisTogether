@@ -1,9 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import {
+  GameBoard as GameBoardComponent,
+  HoldPiece,
+  NextPieces,
+  GameInfo,
+  type GameAction as TetrisGameAction,
+} from "@/components/tetris";
 
 // Bag Randomizer System
 function rotl(x: number, k: number): number {
@@ -615,12 +620,7 @@ class TetrisGame {
   }
 }
 
-export type GameAction =
-  | { type: "MOVE_PIECE"; payload: { dx: number; dy: number } }
-  | { type: "ROTATE_PIECE"; payload: { clockwise: boolean } }
-  | { type: "HARD_DROP" }
-  | { type: "HOLD" }
-  | { type: "PAUSE" };
+export type GameAction = TetrisGameAction;
 
 export function useGame(initialSeed: number) {
   const [, forceUpdate] = useState({});
@@ -693,112 +693,6 @@ export default function TetrisGameOOP({ dispatch, onDispatchReady }: TetrisGameO
     return () => clearInterval(interval);
   }, [game, game.getLines(), game.isGameOver(), game.isPausedState()]);
 
-  const renderBoard = () => {
-    const displayBoard = game.getDisplayBoard();
-
-    return displayBoard.map((row, y) => (
-      <div key={y} className="flex">
-        {row.map((cell, x) => (
-          <div
-            key={x}
-            className={cn(
-              "h-6 w-6 border border-gray-300",
-              y < BUFFER_ROWS && "border-dashed border-gray-200",
-              cell === "ghost" ? "bg-gray-500" : cell || "bg-gray-100",
-            )}
-          />
-        ))}
-      </div>
-    ));
-  };
-
-  const renderPiecePreview = (type: TetrominoType) => {
-    // Create a mini grid for the piece
-    const miniGrid = Array(3)
-      .fill(null)
-      .map(() => Array(4).fill(null));
-
-    // Get piece coordinates relative to (0,0)
-    const coords = TETROMINOES[type].coords;
-    const color = TETROMINOES[type].color;
-
-    // Center the piece in the mini grid
-    const offsetX = type === "I" ? 0.5 : 1;
-    const offsetY = 1;
-
-    coords.forEach(([dx, dy]) => {
-      const x = Math.floor(dx + offsetX);
-      const y = Math.floor(dy + offsetY);
-      if (x >= 0 && x < 4 && y >= 0 && y < 3) {
-        miniGrid[y][x] = color;
-      }
-    });
-
-    return (
-      <div className="mb-1 border border-gray-300">
-        {miniGrid.map((row, y) => (
-          <div key={y} className="flex">
-            {row.map((cell, x) => (
-              <div key={x} className={`h-4 w-5 border border-gray-200 ${cell || "bg-gray-50"}`} />
-            ))}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderHoldPiece = () => {
-    const heldPiece = game.getHeldPiece();
-
-    // Create a mini grid for the held piece
-    const miniGrid = Array(3)
-      .fill(null)
-      .map(() => Array(4).fill(null));
-
-    // If there's a held piece, add it to the grid
-    if (heldPiece) {
-      const coords = TETROMINOES[heldPiece.type].coords;
-      const color = heldPiece.getColor();
-
-      // Center the piece in the mini grid
-      const offsetX = heldPiece.type === "I" ? 0.5 : 1;
-      const offsetY = 1;
-
-      coords.forEach(([dx, dy]) => {
-        const x = Math.floor(dx + offsetX);
-        const y = Math.floor(dy + offsetY);
-        if (x >= 0 && x < 4 && y >= 0 && y < 3) {
-          miniGrid[y][x] = color;
-        }
-      });
-    }
-
-    return (
-      <div className={`border border-gray-300 ${!game.canHoldPiece() ? "opacity-50" : ""}`}>
-        {miniGrid.map((row, y) => (
-          <div key={y} className="flex">
-            {row.map((cell, x) => (
-              <div key={x} className={`h-4 w-5 border border-gray-200 ${cell || "bg-gray-50"}`} />
-            ))}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderNextPieces = () => {
-    const nextPieces = game.getNextPieces();
-    return (
-      <div>
-        {nextPieces.map((type, index) => (
-          <div key={index} className={index === 0 ? "" : "mt-1"}>
-            {renderPiecePreview(type)}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return (
     <div className="flex gap-4 p-4">
       <Card>
@@ -806,58 +700,24 @@ export default function TetrisGameOOP({ dispatch, onDispatchReady }: TetrisGameO
           <CardTitle>Tetris</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="inline-block border-2 border-gray-400">{renderBoard()}</div>
+          <GameBoardComponent board={game.getDisplayBoard()} />
         </CardContent>
       </Card>
 
       <div className="space-y-4">
-        <Card className="w-24">
-          <CardHeader className="px-3">
-            <CardTitle className="text-sm">Hold</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 pt-0">{renderHoldPiece()}</CardContent>
-        </Card>
-        <Card className="w-24">
-          <CardHeader className="px-3">
-            <CardTitle className="text-sm">Next</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 pt-0">{renderNextPieces()}</CardContent>
-        </Card>
+        <HoldPiece heldPiece={game.getHeldPiece()} canHold={game.canHoldPiece()} className="w-24" />
+        <NextPieces nextPieces={game.getNextPieces()} className="w-24" />
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Game Info</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <div>Score: {game.getScore()}</div>
-            <div>Lines: {game.getLines()}</div>
-            <div className="text-xs text-gray-500">Seed: {game.getSeed()}</div>
-          </div>
 
-          <div className="space-y-2">
-            <Button onClick={() => dispatchAction({ type: "PAUSE" })} className="w-full">
-              {game.isPausedState() ? "Resume" : "Pause"}
-            </Button>
-            <Button onClick={restartGame} className="w-full">
-              Restart
-            </Button>
-          </div>
-
-          {game.isGameOver() && <div className="text-center font-bold text-red-600">Game Over!</div>}
-
-          <div className="space-y-1 text-sm">
-            <div>Controls:</div>
-            <div>← → Move</div>
-            <div>↓ Soft drop</div>
-            <div>↑ X: Rotate CW</div>
-            <div>Z: Rotate CCW</div>
-            <div>Space: Hard drop</div>
-            <div>Shift: Hold</div>
-            <div>P: Pause</div>
-          </div>
-        </CardContent>
-      </Card>
+      <GameInfo
+        score={game.getScore()}
+        lines={game.getLines()}
+        seed={game.getSeed()}
+        isPaused={game.isPausedState()}
+        isGameOver={game.isGameOver()}
+        onAction={dispatchAction}
+        onRestart={restartGame}
+      />
     </div>
   );
 }

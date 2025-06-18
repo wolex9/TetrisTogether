@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { User, useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth-context";
 import { UserHoverCard } from "@/components/user-hover-card";
 import { User as UserIcon, LogOut as LogOutIcon } from "lucide-react";
 
