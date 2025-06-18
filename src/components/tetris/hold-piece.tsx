@@ -17,7 +17,7 @@ export function HoldPiece({ heldPiece, canHold, className }: HoldPieceProps) {
   return (
     <Card className={className}>
       <CardHeader className="px-3">
-        <CardTitle className="text-sm">Hold</CardTitle>
+        <CardTitle className="text-sm">Turēt</CardTitle>
       </CardHeader>
       <CardContent className="p-3 pt-0">
         <PiecePreview type={heldPiece?.type} disabled={!canHold} />

@@ -12,7 +12,7 @@ export default function MultiplayerPage() {
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-800">Vairāki spēlētāji</h1>
           <Link href="/" className="rounded-lg bg-gray-600 px-4 py-2 text-white transition-colors hover:bg-gray-700">
-            ← Atpakaļ uz sākumu
+            ← Atpakaļ
           </Link>
         </div>
 

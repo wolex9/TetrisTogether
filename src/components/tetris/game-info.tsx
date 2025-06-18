@@ -24,35 +24,35 @@ export function GameInfo({ score, lines, seed, isPaused, isGameOver, onAction, o
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>Game Info</CardTitle>
+        <CardTitle>Spēles informācija</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <div>Score: {score}</div>
-          <div>Lines: {lines}</div>
-          <div className="text-xs text-gray-500">Seed: {seed}</div>
+          <div>Punkti: {score}</div>
+          <div>Līnijas: {lines}</div>
+          <div className="text-xs text-gray-500">Sēkla: {seed}</div>
         </div>
 
         <div className="space-y-2">
           <Button onClick={() => onAction({ type: "PAUSE" })} className="w-full">
-            {isPaused ? "Resume" : "Pause"}
+            {isPaused ? "Atsākt" : "Pauzēt"}
           </Button>
           <Button onClick={onRestart} className="w-full">
-            Restart
+            Sākt no jauna
           </Button>
         </div>
 
-        {isGameOver && <div className="text-center font-bold text-red-600">Game Over!</div>}
+        {isGameOver && <div className="text-center font-bold text-red-600">Spēle beigusies!</div>}
 
         <div className="space-y-1 text-sm">
-          <div>Controls:</div>
-          <div>← → Move</div>
-          <div>↓ Soft drop</div>
-          <div>↑ X: Rotate CW</div>
-          <div>Z: Rotate CCW</div>
-          <div>Space: Hard drop</div>
-          <div>Shift: Hold</div>
-          <div>P: Pause</div>
+          <div>Vadība:</div>
+          <div>← → Kustība</div>
+          <div>↓ Mīksta krišana</div>
+          <div>↑ X: Grieziet CW</div>
+          <div>Z: Grieziet CCW</div>
+          <div>Space: Cieta krišana</div>
+          <div>Shift: Turēt</div>
+          <div>P: Pauze</div>
         </div>
       </CardContent>
     </Card>

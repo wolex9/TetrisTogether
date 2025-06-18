@@ -30,28 +30,28 @@ export function RegisterForm({ onSubmit, onBack, onAnonymous, loading, error }: 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
-            Email
+            E-pasts
           </label>
           <Input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
+            placeholder="Ievadiet savu e-pastu"
             disabled={loading}
             autoFocus
           />
         </div>
         <div>
           <label htmlFor="register-password" className="mb-1 block text-sm font-medium text-gray-700">
-            Password
+            Parole
           </label>
           <Input
             id="register-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Create a password (min 6 characters)"
+            placeholder="Izveidojiet paroli (min 6 rakstzīmes)"
             disabled={loading}
           />
         </div>
@@ -61,7 +61,7 @@ export function RegisterForm({ onSubmit, onBack, onAnonymous, loading, error }: 
           disabled={loading || !email || !password || password.length < 6}
           size="lg"
         >
-          {loading ? "Creating Account..." : "Create Account"}
+          {loading ? "Izveido kontu..." : "Izveidot kontu"}
         </Button>
       </form>
 
@@ -70,16 +70,16 @@ export function RegisterForm({ onSubmit, onBack, onAnonymous, loading, error }: 
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-gray-500">Or</span>
+          <span className="bg-white px-2 text-gray-500">Vai</span>
         </div>
       </div>
 
       <Button onClick={onAnonymous} variant="outline" className="w-full" disabled={loading}>
-        Continue as Guest
+        Turpināt kā viesim
       </Button>
 
       <Button type="button" onClick={onBack} variant="ghost" className="w-full">
-        Back to Username
+        Atpakaļ uz lietotājvārdu
       </Button>
     </div>
   );

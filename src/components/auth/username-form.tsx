@@ -24,20 +24,20 @@ export function UsernameForm({ onSubmit, loading, error }: UsernameFormProps) {
       {error && <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>}
       <div>
         <label htmlFor="username" className="mb-1 block text-sm font-medium text-gray-700">
-          Username
+          Lietotājvārds
         </label>
         <Input
           id="username"
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Enter your username"
+          placeholder="Ievadiet savu lietotājvārdu"
           disabled={loading}
           autoFocus
         />
       </div>
       <Button type="submit" className="w-full" disabled={loading || !username.trim()} size="lg">
-        {loading ? "Checking..." : "Continue"}
+        {loading ? "Pārbauda..." : "Turpināt"}
       </Button>
     </form>
   );

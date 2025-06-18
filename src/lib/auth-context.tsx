@@ -37,7 +37,7 @@ export function AuthProvider({ user, isGuest, children }: AuthProviderProps) {
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
+    throw new Error("useAuth jāizmanto AuthProvider ietvaros");
   }
   return context;
 }

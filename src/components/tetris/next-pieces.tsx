@@ -11,7 +11,7 @@ export function NextPieces({ nextPieces, className }: NextPiecesProps) {
   return (
     <Card className={className}>
       <CardHeader className="px-3">
-        <CardTitle className="text-sm">Next</CardTitle>
+        <CardTitle className="text-sm">Nākamais</CardTitle>
       </CardHeader>
       <CardContent className="p-3 pt-0">
         <div>

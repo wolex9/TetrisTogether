@@ -5,8 +5,8 @@ import AuthGateway from "@/components/auth-gateway";
 import { SiteHeader } from "@/components/site-header";
 
 export const metadata: Metadata = {
-  title: "tg",
-  description: "tg app",
+  title: "TetrisTogether",
+  description: "TetrisTogether - spēlē Tetrisu kopā ar draugiem!",
 };
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="lv">
       <body className={GeistMono.className}>
         <AuthGateway>
           <SiteHeader />

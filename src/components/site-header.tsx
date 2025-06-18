@@ -12,7 +12,7 @@ export function SiteHeader() {
     <div className="border-b bg-gray-50 p-4">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">tg</h1>
+          <h1 className="text-xl font-semibold">TetrisTogether</h1>
         </div>
         <UserHoverCard user={user} triggerClassName="flex items-center gap-2">
           <div className="space-y-1">
@@ -21,14 +21,14 @@ export function SiteHeader() {
               className="flex items-center gap-2 rounded px-2 py-1 hover:bg-gray-100"
             >
               <UserIcon className="h-4 w-4" />
-              <span>Profile</span>
+              <span>Profils</span>
             </Link>
             <button
               onClick={logout}
               className="flex items-center gap-2 rounded px-2 py-1 text-red-400 hover:bg-gray-100"
             >
               <LogOutIcon className="h-4 w-4" />
-              <span>Logout</span>
+              <span>Iziet</span>
             </button>
           </div>
         </UserHoverCard>

@@ -96,23 +96,23 @@ export default function Lobby({ roomId }: LobbyProps) {
     <div className="lobby">
       {!isConnected && (
         <div className="flex items-center justify-center p-4">
-          <div className="text-sm text-gray-500">Connecting to room {roomId}...</div>
+          <div className="text-sm text-gray-500">Savienojas ar istabu {roomId}...</div>
         </div>
       )}
 
       {isConnected && (
         <>
           <div className="mb-4 rounded-lg bg-gray-100 p-4">
-            <h3 className="mb-2 font-semibold">Room: {roomId}</h3>
+            <h3 className="mb-2 font-semibold">Istaba: {roomId}</h3>
             <div className="text-sm text-gray-600">
-              Players ({roomMembers.length}): {roomMembers.map((m) => m.username).join(", ")}
+              Spēlētāji ({roomMembers.length}): {roomMembers.map((m) => m.username).join(", ")}
             </div>
           </div>
 
           {!isGameStarted && (
             <div className="mb-8 flex justify-center">
               <Button onClick={handleStartGame} size="lg" className="px-12 py-6 text-xl font-bold">
-                🚀 Start Game
+                🚀 Sākt spēli
               </Button>
             </div>
           )}
