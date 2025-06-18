@@ -615,6 +615,13 @@ class TetrisGame {
   }
 }
 
+export type GameAction =
+  | { type: "MOVE_PIECE"; payload: { dx: number; dy: number } }
+  | { type: "ROTATE_PIECE"; payload: { clockwise: boolean } }
+  | { type: "HARD_DROP" }
+  | { type: "HOLD" }
+  | { type: "PAUSE" };
+
 export function useGame(initialSeed: number) {
   const [, forceUpdate] = useState({});
   const gameRef = useRef<TetrisGame>(null);
@@ -625,6 +632,28 @@ export function useGame(initialSeed: number) {
     gameRef.current.start();
   }, [initialSeed]);
 
+  const dispatch = useCallback((action: GameAction) => {
+    if (!gameRef.current) return;
+
+    switch (action.type) {
+      case "MOVE_PIECE":
+        gameRef.current.movePiece(action.payload.dx, action.payload.dy);
+        break;
+      case "ROTATE_PIECE":
+        gameRef.current.rotatePiece(action.payload.clockwise);
+        break;
+      case "HARD_DROP":
+        gameRef.current.hardDrop();
+        break;
+      case "HOLD":
+        gameRef.current.hold();
+        break;
+      case "PAUSE":
+        gameRef.current.pause();
+        break;
+    }
+  }, []);
+
   // Initialize game on first render
   if (!gameRef.current) {
     restartGame();
@@ -632,97 +661,28 @@ export function useGame(initialSeed: number) {
 
   return {
     game: gameRef.current!,
+    dispatch,
     restartGame,
   };
 }
 
-export default function TetrisGameOOP() {
-  const { game, restartGame } = useGame(42);
-  const keysPressed = useRef<Set<string>>(new Set());
-  const lastMoveTime = useRef<{ [key: string]: number }>({});
+interface TetrisGameOOPProps {
+  dispatch?: (action: GameAction) => void;
+  onDispatchReady?: (dispatchFn: (action: GameAction) => void) => void;
+}
 
-  // Handle keyboard input with key state tracking
+export default function TetrisGameOOP({ dispatch, onDispatchReady }: TetrisGameOOPProps = {}) {
+  const { game, dispatch: gameDispatch, restartGame } = useGame(42);
+
+  // Notify parent component about the internal dispatch function
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent default for game keys
-      if (
-        ["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp", " ", "Shift", "z", "Z", "x", "X", "p", "P"].includes(e.key)
-      ) {
-        e.preventDefault();
-      }
+    if (onDispatchReady) {
+      onDispatchReady(gameDispatch);
+    }
+  }, [onDispatchReady, gameDispatch]);
 
-      // Add key to pressed set
-      keysPressed.current.add(e.key);
-
-      // Handle one-time actions (rotation, hold, pause, hard drop)
-      switch (e.key) {
-        case "ArrowUp":
-        case "x":
-        case "X":
-          game.rotatePiece(true); // Clockwise
-          break;
-        case "z":
-        case "Z":
-          game.rotatePiece(false); // Counter-clockwise
-          break;
-        case " ":
-          game.hardDrop();
-          break;
-        case "Shift":
-          game.hold();
-          break;
-        case "p":
-        case "P":
-          game.pause();
-          break;
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      // Remove key from pressed set
-      keysPressed.current.delete(e.key);
-      // Reset timing for this key
-      delete lastMoveTime.current[e.key];
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, [game]);
-
-  // Handle continuous key presses (movement)
-  useEffect(() => {
-    const MOVE_DELAY = 100; // milliseconds between moves
-    const SOFT_DROP_DELAY = 50; // faster for soft drop
-
-    const movementKeys = [
-      { key: "ArrowLeft", action: () => game.movePiece(-1, 0), delay: MOVE_DELAY },
-      { key: "ArrowRight", action: () => game.movePiece(1, 0), delay: MOVE_DELAY },
-      { key: "ArrowDown", action: () => game.movePiece(0, 1), delay: SOFT_DROP_DELAY },
-    ];
-
-    const handleContinuousInput = () => {
-      const now = Date.now();
-
-      movementKeys.forEach(({ key, action, delay }) => {
-        if (keysPressed.current.has(key)) {
-          const lastTime = lastMoveTime.current[key] || 0;
-          const shouldMove = lastTime === 0 || now - lastTime >= delay;
-
-          if (shouldMove && action()) {
-            lastMoveTime.current[key] = now;
-          }
-        }
-      });
-    };
-
-    const interval = setInterval(handleContinuousInput, 16); // ~60fps
-    return () => clearInterval(interval);
-  }, [game]);
+  // Use provided dispatch or fallback to game dispatch
+  const dispatchAction = dispatch || gameDispatch;
 
   // Game loop
   useEffect(() => {
@@ -876,7 +836,7 @@ export default function TetrisGameOOP() {
           </div>
 
           <div className="space-y-2">
-            <Button onClick={() => game.pause()} className="w-full">
+            <Button onClick={() => dispatchAction({ type: "PAUSE" })} className="w-full">
               {game.isPausedState() ? "Resume" : "Pause"}
             </Button>
             <Button onClick={restartGame} className="w-full">
