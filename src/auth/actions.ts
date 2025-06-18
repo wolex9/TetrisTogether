@@ -47,13 +47,10 @@ export async function registerUser(
   username: string,
   email: string,
   password: string,
+  country_code?: string,
 ): Promise<{ success: boolean; user?: User }> {
   try {
     const { hash, salt } = await hashPassword(password);
-    const country_code = await fetch(`https://api.ipinfo.io/lite/me?token=${process.env.IPINFO_TOKEN}`)
-      .then((resp) => resp.json())
-      .then((data) => data.country_code as string)
-      .catch(() => undefined);
 
     const user = await createUser(username, email, hash, salt, country_code);
     const sessionToken = await createSession(user.id);

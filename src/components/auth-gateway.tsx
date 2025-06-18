@@ -80,7 +80,13 @@ export default function AuthGateway({ children }: { children: ReactNode }) {
     setError("");
 
     try {
-      const result = await registerUser(username, email, password);
+      // Fetch country code on client side using user's IP
+      const country_code = await fetch(`https://api.ipinfo.io/lite/me?token=${process.env.NEXT_PUBLIC_IPINFO_TOKEN}`)
+        .then((resp) => resp.json())
+        .then((data) => data.country_code as string)
+        .catch(() => undefined);
+
+      const result = await registerUser(username, email, password, country_code);
       if (result.success && result.user) {
         setUser(result.user);
         setIsGuest(false);
