@@ -134,7 +134,6 @@ app.prepare().then(() => {
           // Broadcast garbage to all players with target info for client-side filtering
           socket.nsp.emit("receiveGarbage", {
             lines: garbageLines,
-            fromUsername: username,
             targetUsername: randomTarget.username,
           });
         }
