@@ -1,11 +1,20 @@
 import { useEffect, useRef } from "react";
 import type { GameAction } from "@/tetris-game-oop";
 
+// Define the game interface that the hook needs
+interface GameInstance {
+  tick(): void;
+  isGameOver(): boolean;
+  isPausedState(): boolean;
+  getLines(): number;
+}
+
 /**
- * Custom hook to handle keyboard controls for the Tetris game.
+ * Custom hook to handle keyboard controls and game loop for the Tetris game.
  * @param dispatch - function to dispatch GameAction events
+ * @param game - optional game instance for automatic ticking (local play only)
  */
-export default function useKeyboardControls(dispatch: (action: GameAction) => void) {
+export default function useKeyboardControls(dispatch: (action: GameAction) => void, game?: GameInstance) {
   const keysPressed = useRef<Set<string>>(new Set());
   const lastMoveTime = useRef<Record<string, number>>({});
 
@@ -96,4 +105,13 @@ export default function useKeyboardControls(dispatch: (action: GameAction) => vo
     const interval = setInterval(handleContinuousInput, 16);
     return () => clearInterval(interval);
   }, [dispatch]);
+
+  // Game loop (only for local play)
+  useEffect(() => {
+    if (!game || game.isGameOver() || game.isPausedState()) return;
+
+    const interval = setInterval(() => game.tick(), Math.max(100, 1000 - game.getLines() * 50));
+
+    return () => clearInterval(interval);
+  }, [game, game?.getLines(), game?.isGameOver(), game?.isPausedState()]);
 }

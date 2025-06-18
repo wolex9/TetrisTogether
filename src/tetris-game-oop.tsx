@@ -1,14 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  GameBoard as GameBoardComponent,
-  HoldPiece,
-  NextPieces,
-  GameInfo,
-  type GameAction as TetrisGameAction,
-} from "@/components/tetris";
+import { useState, useRef, useCallback } from "react";
+import { type GameAction as TetrisGameAction } from "@/components/tetris";
 
 // Bag Randomizer System
 function rotl(x: number, k: number): number {
@@ -664,60 +657,4 @@ export function useGame(initialSeed: number) {
     dispatch,
     restartGame,
   };
-}
-
-interface TetrisGameOOPProps {
-  dispatch?: (action: GameAction) => void;
-  onDispatchReady?: (dispatchFn: (action: GameAction) => void) => void;
-}
-
-export default function TetrisGameOOP({ dispatch, onDispatchReady }: TetrisGameOOPProps = {}) {
-  const { game, dispatch: gameDispatch, restartGame } = useGame(42);
-
-  // Notify parent component about the internal dispatch function
-  useEffect(() => {
-    if (onDispatchReady) {
-      onDispatchReady(gameDispatch);
-    }
-  }, [onDispatchReady, gameDispatch]);
-
-  // Use provided dispatch or fallback to game dispatch
-  const dispatchAction = dispatch || gameDispatch;
-
-  // Game loop
-  useEffect(() => {
-    if (game.isGameOver() || game.isPausedState()) return;
-
-    const interval = setInterval(() => game.tick(), Math.max(100, 1000 - game.getLines() * 50));
-
-    return () => clearInterval(interval);
-  }, [game, game.getLines(), game.isGameOver(), game.isPausedState()]);
-
-  return (
-    <div className="flex gap-4 p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Tetris</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <GameBoardComponent board={game.getDisplayBoard()} />
-        </CardContent>
-      </Card>
-
-      <div className="space-y-4">
-        <HoldPiece heldPiece={game.getHeldPiece()} canHold={game.canHoldPiece()} className="w-24" />
-        <NextPieces nextPieces={game.getNextPieces()} className="w-24" />
-      </div>
-
-      <GameInfo
-        score={game.getScore()}
-        lines={game.getLines()}
-        seed={game.getSeed()}
-        isPaused={game.isPausedState()}
-        isGameOver={game.isGameOver()}
-        onAction={dispatchAction}
-        onRestart={restartGame}
-      />
-    </div>
-  );
 }
