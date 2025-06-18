@@ -10,6 +10,7 @@ CREATE TABLE users (
     email VARCHAR(254) NOT NULL,
     password_hash CHAR(128) NOT NULL, -- crypto.scrypt(keylen = 64).toString("hex")
     salt CHAR(32) NOT NULL, -- crypto.randomBytes(16).toString("hex")
+    country_code CHAR(2),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -32,6 +33,7 @@ CREATE TABLE friendships (
 
 CREATE TABLE games (
     id SERIAL PRIMARY KEY,
+    uuid UUID NOT NULL DEFAULT gen_random_uuid(),
     mode game_mode NOT NULL,
     settings JSONB NOT NULL,
     status game_status DEFAULT 'in_progress',

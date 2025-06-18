@@ -50,7 +50,12 @@ export async function registerUser(
 ): Promise<{ success: boolean; user?: User }> {
   try {
     const { hash, salt } = await hashPassword(password);
-    const user = await createUser(username, email, hash, salt);
+    const countryCode = await fetch(`https://api.ipinfo.io/lite/me?token=${process.env.IPINFO_TOKEN}`)
+      .then((resp) => resp.json())
+      .then((data) => data.country_code as string)
+      .catch(() => undefined);
+
+    const user = await createUser(username, email, hash, salt, countryCode);
     const sessionToken = await createSession(user.id);
 
     // Set session cookie
