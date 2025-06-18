@@ -26,7 +26,7 @@ export default function LocalTetris({ socket, seed }: LocalTetrisProps) {
     [socket],
   );
 
-  const { game, dispatch, restartGame } = useGame(seed, onLinesCleared);
+  const { game, dispatch } = useGame(seed, onLinesCleared);
 
   // Refs for keyboard handling
   const keysPressed = useRef<Set<string>>(new Set());

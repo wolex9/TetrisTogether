@@ -72,13 +72,14 @@ const playerProfiles = {
 };
 
 interface ProfilePageProps {
-  params: {
+  params: Promise<{
     username: string;
-  };
+  }>;
 }
 
-export default function ProfilePage({ params }: ProfilePageProps) {
-  const profile = playerProfiles[params.username as keyof typeof playerProfiles];
+export default async function ProfilePage({ params }: ProfilePageProps) {
+  const { username } = await params;
+  const profile = playerProfiles[username as keyof typeof playerProfiles];
 
   if (!profile) {
     notFound();

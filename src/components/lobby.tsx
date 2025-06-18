@@ -120,7 +120,7 @@ export default function Lobby({ roomId }: LobbyProps) {
               <div className="mt-4 rounded-lg bg-gray-50 p-3">
                 <div className="mb-2 text-sm font-medium text-gray-700">Spēlētāju saraksts:</div>
                 <div className="text-sm text-gray-600">
-                  {roomMembers.map((m, index) => (
+                  {roomMembers.map((m) => (
                     <div key={m.socketId} className="flex items-center justify-between py-1">
                       <span className={cn(m.username == user.username && "font-bold text-green-600")}>
                         {m.username}
