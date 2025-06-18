@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GameBoard as GameBoardComponent, HoldPiece, NextPieces, GameInfo } from "@/components/tetris";
 import { useGame, type GameAction } from "@/tetris-game-oop";
 import { Socket } from "socket.io-client";
+import type { ServerToClientEvents, ClientToServerEvents } from "@/types/socket";
 
 interface RemoteTetrisProps {
-  socket?: Socket;
+  socket?: Socket<ServerToClientEvents, ClientToServerEvents>;
   username?: string;
   seed: number;
 }
@@ -19,6 +20,7 @@ export default function RemoteTetris({ socket, username = "Remote Player", seed 
   useEffect(() => {
     if (!socket) return;
 
+    // GameAction type is inferred from socket events, but we keep explicit typing for clarity
     const handleGameAction = (action: GameAction) => {
       dispatch(action);
     };

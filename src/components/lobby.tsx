@@ -5,26 +5,22 @@ import { io, Socket } from "socket.io-client";
 import { useAuth } from "@/lib/auth-context";
 import LocalTetris from "./local-tetris";
 import RemoteTetris from "./remote-tetris";
+import type { ServerToClientEvents, ClientToServerEvents, RoomMember } from "@/types/socket";
 
 interface LobbyProps {
   roomId: string;
 }
 
-interface RoomMember {
-  username: string;
-  socketId: string;
-}
-
 export default function Lobby({ roomId }: LobbyProps) {
   const { user } = useAuth();
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [roomMembers, setRoomMembers] = useState<RoomMember[]>([]);
   const [seed] = useState(() => Math.floor(Math.random() * 1000000)); // Generate lobby seed once
 
   // Set up socket connection
   useEffect(() => {
-    const socket = io(`/${roomId}`);
+    const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(`/${roomId}`);
     socketRef.current = socket;
 
     socket.on("connect", () => {
@@ -37,16 +33,16 @@ export default function Lobby({ roomId }: LobbyProps) {
       setIsConnected(false);
     });
 
-    // Handle room member updates
-    socket.on("roomMembers", (members: RoomMember[]) => {
+    // Handle room member updates (types are now inferred)
+    socket.on("roomMembers", (members) => {
       setRoomMembers(members);
     });
 
-    socket.on("userJoined", (member: RoomMember) => {
+    socket.on("userJoined", (member) => {
       setRoomMembers((prev) => [...prev, member]);
     });
 
-    socket.on("userLeft", (member: RoomMember) => {
+    socket.on("userLeft", (member) => {
       setRoomMembers((prev) => prev.filter((m) => m.socketId !== member.socketId));
     });
 

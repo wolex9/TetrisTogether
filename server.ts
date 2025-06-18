@@ -1,6 +1,13 @@
 import { createServer } from "http";
 import next from "next";
 import { Server } from "socket.io";
+import type {
+  ServerToClientEvents,
+  ClientToServerEvents,
+  InterServerEvents,
+  SocketData,
+  RoomMember,
+} from "./src/types/socket.js";
 
 const port = parseInt(process.env.PORT || "3000");
 const dev = process.env.NODE_ENV !== "production";
@@ -10,15 +17,15 @@ const handler = app.getRequestHandler();
 app.prepare().then(() => {
   const httpServer = createServer(handler);
 
-  const io = new Server(httpServer, {
+  const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>(httpServer, {
     cors: {
       origin: "*",
       methods: ["GET", "POST"],
     },
   });
 
-  // Store room members: roomId -> { socketId -> { username, socketId } }
-  const roomMembers = new Map<string, Map<string, { username: string; socketId: string }>>();
+  // Store room members: roomId -> { socketId -> RoomMember }
+  const roomMembers = new Map<string, Map<string, RoomMember>>();
 
   // Handle different room namespaces
   io.of(/^\/.*$/).on("connection", (socket) => {
@@ -30,15 +37,18 @@ app.prepare().then(() => {
     // Initialize room if it doesn't exist
     if (!roomMembers.has(roomId)) {
       roomMembers.set(roomId, new Map());
-    }
-
-    // Handle user join with username
-    socket.on("join", (data: { username: string }) => {
+    } // Handle user join with username
+    socket.on("join", (data) => {
       const { username } = data;
+
+      // Store user data in socket
+      socket.data.username = username;
+      socket.data.roomId = roomId;
 
       // Add user to room members
       const room = roomMembers.get(roomId)!;
-      room.set(socket.id, { username, socketId: socket.id });
+      const member: RoomMember = { username, socketId: socket.id };
+      room.set(socket.id, member);
 
       // Join the socket room
       socket.join(roomId);
@@ -50,9 +60,14 @@ app.prepare().then(() => {
       socket.emit("roomMembers", members);
 
       // Notify other users in the room about the new member
-      socket.to(roomId).emit("userJoined", { username, socketId: socket.id });
+      socket.to(roomId).emit("userJoined", member);
     });
 
+    // Handle game actions
+    socket.on("gameAction", (action) => {
+      // Broadcast the action to other users in the room
+      socket.to(roomId).emit("gameAction", action);
+    });
     socket.on("disconnect", () => {
       // Remove user from room members
       const room = roomMembers.get(roomId);
@@ -63,7 +78,7 @@ app.prepare().then(() => {
           console.log(`${user.username} disconnected from room: ${roomId}`);
 
           // Notify other users about the disconnection
-          socket.to(roomId).emit("userLeft", { username: user.username, socketId: socket.id });
+          socket.to(roomId).emit("userLeft", user);
         }
 
         // Clean up empty rooms

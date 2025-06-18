@@ -6,9 +6,10 @@ import useKeyboardControls from "@/hooks/use-keyboard-controls";
 import { useGame } from "@/tetris-game-oop";
 import { useAuth } from "@/lib/auth-context";
 import { Socket } from "socket.io-client";
+import type { ServerToClientEvents, ClientToServerEvents } from "@/types/socket";
 
 interface LocalTetrisProps {
-  socket?: Socket;
+  socket?: Socket<ServerToClientEvents, ClientToServerEvents>;
   seed: number;
 }
 
