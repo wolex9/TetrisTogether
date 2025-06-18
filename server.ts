@@ -114,13 +114,30 @@ app.prepare().then(() => {
     // Handle lines cleared (garbage system)
     socket.on("linesCleared", (data) => {
       const username = socket.data.username;
-      if (username && data.lines > 1) {
+      const room = rooms.get(roomId);
+
+      if (username && room && data.lines > 1) {
         // Only send garbage for 2+ lines
         const garbageLines = data.lines - 1; // Send 1 less than cleared lines
-        console.log(`${username} cleared ${data.lines} lines, sending ${garbageLines} garbage to opponents`);
 
-        // Send garbage to all other players in the room
-        socket.to(roomId).emit("receiveGarbage", { lines: garbageLines });
+        // Get other players in the room (exclude the sender)
+        const otherPlayers = room.members.filter((member) => member.socketId !== socket.id);
+
+        if (otherPlayers.length > 0) {
+          // Pick a random target from other players
+          const randomTarget = otherPlayers[Math.floor(Math.random() * otherPlayers.length)];
+
+          console.log(
+            `${username} cleared ${data.lines} lines, sending ${garbageLines} garbage to ${randomTarget.username}`,
+          );
+
+          // Broadcast garbage to all players with target info for client-side filtering
+          socket.nsp.emit("receiveGarbage", {
+            lines: garbageLines,
+            fromUsername: username,
+            targetUsername: randomTarget.username,
+          });
+        }
       }
     });
 

@@ -73,7 +73,7 @@ export default function Lobby({ roomId }: LobbyProps) {
     return (
       <div className="flex flex-wrap gap-4">
         {/* Local player */}
-        <LocalTetris socket={socketRef.current} seed={gameSeed} />
+        <LocalTetris socket={socketRef.current} seed={gameSeed} roomMembers={roomMembers} />
 
         {/* Remote players */}
         {otherMembers.map((member) => (
@@ -82,6 +82,7 @@ export default function Lobby({ roomId }: LobbyProps) {
             socket={socketRef.current!}
             targetUsername={member.username}
             seed={gameSeed}
+            roomMembers={roomMembers}
           />
         ))}
       </div>

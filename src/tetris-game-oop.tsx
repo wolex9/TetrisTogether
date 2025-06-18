@@ -297,11 +297,13 @@ class GameBoard {
   private width: number;
   private height: number;
   private bufferRows: number;
+  private rng: () => number;
 
-  constructor(width = BOARD_WIDTH, height = BOARD_HEIGHT, bufferRows = BUFFER_ROWS) {
+  constructor(width = BOARD_WIDTH, height = BOARD_HEIGHT, bufferRows = BUFFER_ROWS, seed: number) {
     this.width = width;
     this.height = height;
     this.bufferRows = bufferRows;
+    this.rng = prng(seed, 31); // Use the same PRNG as piece generation but different state
     this.board = Array(height + bufferRows)
       .fill(null)
       .map(() => Array(width).fill(null));
@@ -351,8 +353,8 @@ class GameBoard {
     for (let i = 0; i < lines; i++) {
       // Use semantic 'garbage' as cell value, mapped in the UI to a tailwind class
       const garbageLine = Array(this.width).fill("garbage");
-      // Add a random hole in each garbage line
-      const holePosition = Math.floor(Math.random() * this.width);
+      // Add a deterministic hole in each garbage line using the seeded RNG
+      const holePosition = Math.floor((this.rng() / 0x100000000) * this.width);
       garbageLine[holePosition] = null;
       this.board.push(garbageLine);
     }
@@ -366,6 +368,7 @@ class GameBoard {
     this.board = Array(this.height + this.bufferRows)
       .fill(null)
       .map(() => Array(this.width).fill(null));
+    // Note: RNG state is preserved for consistent garbage generation
   }
 
   getGhostPosition(piece: Tetromino): Tetromino {
@@ -430,7 +433,7 @@ class TetrisGame {
   private queueSize = 5; // Number of pieces to show in the queue
 
   constructor(onStateChange: () => void, initialSeed: number, onLinesCleared?: (lines: number) => void) {
-    this.board = new GameBoard();
+    this.board = new GameBoard(BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ROWS, initialSeed);
     this.onStateChange = onStateChange;
     this.onLinesCleared = onLinesCleared;
     this.seed = initialSeed;

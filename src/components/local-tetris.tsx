@@ -6,7 +6,7 @@ import { GameBoard as GameBoardComponent, HoldPiece, NextPieces, GameInfo } from
 import { useGame, type GameAction } from "@/tetris-game-oop";
 import { useAuth } from "@/lib/auth-context";
 import { Socket } from "socket.io-client";
-import type { ServerToClientEvents, ClientToServerEvents } from "@/types/socket";
+import type { ServerToClientEvents, ClientToServerEvents, RoomMember } from "@/types/socket";
 
 interface LocalTetrisProps {
   socket?: Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -47,9 +47,12 @@ export default function LocalTetris({ socket, seed }: LocalTetrisProps) {
   useEffect(() => {
     if (!socket) return;
 
-    const handleReceiveGarbage = (data: { lines: number }) => {
-      console.log(`Local player receiving ${data.lines} garbage lines`);
-      dispatch({ type: "RECEIVE_GARBAGE", payload: { lines: data.lines } });
+    const handleReceiveGarbage = (data: { lines: number; fromUsername: string; targetUsername: string }) => {
+      // Only apply garbage if this client is the target
+      if (data.targetUsername === user.username) {
+        console.log(`Local player receiving ${data.lines} garbage lines from ${data.fromUsername}`);
+        dispatch({ type: "RECEIVE_GARBAGE", payload: { lines: data.lines } });
+      }
     };
 
     socket.on("receiveGarbage", handleReceiveGarbage);
@@ -57,7 +60,7 @@ export default function LocalTetris({ socket, seed }: LocalTetrisProps) {
     return () => {
       socket.off("receiveGarbage", handleReceiveGarbage);
     };
-  }, [socket, dispatch]);
+  }, [socket, dispatch, user.username]);
 
   // Keyboard controls - one-time actions
   useEffect(() => {

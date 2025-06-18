@@ -11,7 +11,7 @@ export interface ServerToClientEvents {
   gameStarted: (data: { seed: number }) => void;
 
   // Garbage system
-  receiveGarbage: (data: { lines: number }) => void;
+  receiveGarbage: (data: { lines: number; fromUsername: string; targetUsername: string }) => void;
 }
 
 export interface ClientToServerEvents {
