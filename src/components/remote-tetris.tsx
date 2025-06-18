@@ -34,6 +34,22 @@ export default function RemoteTetris({ socket, targetUsername, seed }: RemoteTet
     };
   }, [socket, dispatch, targetUsername]);
 
+  // Handle incoming garbage from socket
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleReceiveGarbage = (data: { lines: number }) => {
+      console.log(`Remote player ${targetUsername} receiving ${data.lines} garbage lines`);
+      dispatch({ type: "RECEIVE_GARBAGE", payload: { lines: data.lines } });
+    };
+
+    socket.on("receiveGarbage", handleReceiveGarbage);
+
+    return () => {
+      socket.off("receiveGarbage", handleReceiveGarbage);
+    };
+  }, [socket, dispatch]);
+
   // No keyboard controls or game loop - only responds to socket events
 
   return (

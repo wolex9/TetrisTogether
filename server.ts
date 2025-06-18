@@ -81,6 +81,19 @@ app.prepare().then(() => {
       // Broadcast game start to all players in the namespace (including sender)
       socket.nsp.emit("gameStarted", { seed });
     });
+
+    // Handle lines cleared (garbage system)
+    socket.on("linesCleared", (data) => {
+      const username = socket.data.username;
+      if (username && data.lines > 1) {
+        // Only send garbage for 2+ lines
+        const garbageLines = data.lines - 1; // Send 1 less than cleared lines
+        console.log(`${username} cleared ${data.lines} lines, sending ${garbageLines} garbage to opponents`);
+
+        // Send garbage to all other players in the room
+        socket.to(roomId).emit("receiveGarbage", { lines: garbageLines });
+      }
+    });
     socket.on("disconnect", () => {
       // Remove user from room members
       const room = roomMembers.get(roomId);

@@ -11,6 +11,9 @@ export interface ServerToClientEvents {
 
   // Game start/control
   gameStarted: (data: { seed: number }) => void;
+
+  // Garbage system
+  receiveGarbage: (data: { lines: number }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -22,6 +25,9 @@ export interface ClientToServerEvents {
 
   // Game start/control
   startGame: () => void;
+
+  // Garbage system
+  linesCleared: (data: { lines: number }) => void;
 }
 
 export interface InterServerEvents {

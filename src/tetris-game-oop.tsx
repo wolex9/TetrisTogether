@@ -343,6 +343,21 @@ class GameBoard {
     return linesCleared;
   }
 
+  addGarbage(lines: number): void {
+    // Remove lines from the top to make room for garbage
+    this.board.splice(0, lines);
+
+    // Add garbage lines at the bottom
+    for (let i = 0; i < lines; i++) {
+      // Use semantic 'garbage' as cell value, mapped in the UI to a tailwind class
+      const garbageLine = Array(this.width).fill("garbage");
+      // Add a random hole in each garbage line
+      const holePosition = Math.floor(Math.random() * this.width);
+      garbageLine[holePosition] = null;
+      this.board.push(garbageLine);
+    }
+  }
+
   getBoard(): (string | null)[][] {
     return this.board.map((row) => [...row]);
   }
@@ -409,13 +424,15 @@ class TetrisGame {
   private gameOver = false;
   private isPaused = false;
   private onStateChange: () => void;
+  private onLinesCleared?: (lines: number) => void;
   private pieceGenerator!: Generator<TetrominoType, never, unknown>;
   private seed: number;
   private queueSize = 5; // Number of pieces to show in the queue
 
-  constructor(onStateChange: () => void, initialSeed: number) {
+  constructor(onStateChange: () => void, initialSeed: number, onLinesCleared?: (lines: number) => void) {
     this.board = new GameBoard();
     this.onStateChange = onStateChange;
+    this.onLinesCleared = onLinesCleared;
     this.seed = initialSeed;
     this.initializePieceGenerator();
     this.fillQueue();
@@ -524,6 +541,17 @@ class TetrisGame {
     this.score += linesCleared * 100 + 10;
     this.lines += linesCleared;
 
+    // Notify about lines cleared for garbage system
+    if (linesCleared > 0) {
+      console.log(`TetrisGame: ${linesCleared} lines cleared`);
+      if (this.onLinesCleared) {
+        console.log(`TetrisGame: Calling onLinesCleared callback`);
+        this.onLinesCleared(linesCleared);
+      } else {
+        console.log(`TetrisGame: No onLinesCleared callback available`);
+      }
+    }
+
     // Check if any part of the locked piece was in the buffer zone
     const isGameOver = coords.some(({ y }) => y < BUFFER_ROWS);
 
@@ -611,19 +639,25 @@ class TetrisGame {
   getNextPieces(): TetrominoType[] {
     return [...this.nextPieces];
   }
+
+  receiveGarbage(lines: number): void {
+    if (this.gameOver || this.isPaused) return;
+    this.board.addGarbage(lines);
+  }
 }
 
 export type GameAction = TetrisGameAction;
 
-export function useGame(initialSeed: number) {
+export function useGame(initialSeed: number, onLinesCleared?: (lines: number) => void) {
+  console.log(`useGame called with seed ${initialSeed}, onLinesCleared:`, !!onLinesCleared);
   const [, forceUpdate] = useState({});
   const gameRef = useRef<TetrisGame>(null);
 
   const restartGame = useCallback(() => {
     const currentSeed = gameRef.current?.getSeed() ?? initialSeed;
-    gameRef.current = new TetrisGame(() => forceUpdate({}), currentSeed + 1);
+    gameRef.current = new TetrisGame(() => forceUpdate({}), currentSeed + 1, onLinesCleared);
     gameRef.current.start();
-  }, [initialSeed]);
+  }, [initialSeed, onLinesCleared]);
 
   const dispatch = useCallback((action: GameAction) => {
     if (!gameRef.current) return;
@@ -644,12 +678,16 @@ export function useGame(initialSeed: number) {
       case "PAUSE":
         gameRef.current.pause();
         break;
+      case "RECEIVE_GARBAGE":
+        gameRef.current.receiveGarbage(action.payload.lines);
+        break;
     }
   }, []);
 
   // Initialize game on first render
   if (!gameRef.current) {
-    restartGame();
+    gameRef.current = new TetrisGame(() => forceUpdate({}), initialSeed, onLinesCleared);
+    gameRef.current.start();
   }
 
   return {

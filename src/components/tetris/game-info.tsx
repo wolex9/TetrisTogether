@@ -6,7 +6,8 @@ export type GameAction =
   | { type: "ROTATE_PIECE"; payload: { clockwise: boolean } }
   | { type: "HARD_DROP" }
   | { type: "HOLD" }
-  | { type: "PAUSE" };
+  | { type: "PAUSE" }
+  | { type: "RECEIVE_GARBAGE"; payload: { lines: number } };
 
 interface GameInfoProps {
   score: number;

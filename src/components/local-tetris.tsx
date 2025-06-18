@@ -15,7 +15,18 @@ interface LocalTetrisProps {
 
 export default function LocalTetris({ socket, seed }: LocalTetrisProps) {
   const { user } = useAuth();
-  const { game, dispatch, restartGame } = useGame(seed);
+
+  // Callback for when lines are cleared (emit to socket for garbage system)
+  const onLinesCleared = useCallback(
+    (lines: number) => {
+      console.log(`LocalTetris: Lines cleared callback called with ${lines} lines`);
+      console.log(`LocalTetris: Socket available:`, !!socket);
+      socket?.emit("linesCleared", { lines });
+    },
+    [socket],
+  );
+
+  const { game, dispatch, restartGame } = useGame(seed, onLinesCleared);
 
   // Refs for keyboard handling
   const keysPressed = useRef<Set<string>>(new Set());
@@ -31,6 +42,22 @@ export default function LocalTetris({ socket, seed }: LocalTetrisProps) {
     },
     [dispatch, socket],
   );
+
+  // Handle incoming garbage from socket
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleReceiveGarbage = (data: { lines: number }) => {
+      console.log(`Local player receiving ${data.lines} garbage lines`);
+      dispatch({ type: "RECEIVE_GARBAGE", payload: { lines: data.lines } });
+    };
+
+    socket.on("receiveGarbage", handleReceiveGarbage);
+
+    return () => {
+      socket.off("receiveGarbage", handleReceiveGarbage);
+    };
+  }, [socket, dispatch]);
 
   // Keyboard controls - one-time actions
   useEffect(() => {
