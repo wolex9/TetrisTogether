@@ -8,6 +8,7 @@ import type {
   SocketData,
   RoomMember,
   Room,
+  RoomInfo,
 } from "./src/types/socket.js";
 
 const port = parseInt(process.env.PORT || "3000");
@@ -27,6 +28,28 @@ app.prepare().then(() => {
 
   // Store persistent rooms: roomId -> Room
   const rooms = new Map<string, Room>();
+
+  // Add a function to get public room info
+  const getPublicRoomsInfo = (): RoomInfo[] => {
+    return Array.from(rooms.values()).map((room) => ({
+      id: room.id,
+      memberCount: room.members.length,
+      isGameStarted: room.isGameStarted,
+      hostUsername: room.members.find((m) => m.isHost)?.username || "Unknown",
+    }));
+  };
+
+  // Handle main namespace for room listing
+  io.on("connection", (socket) => {
+    console.log(`User connected to main namespace: ${socket.id}`);
+
+    // Send current rooms list immediately on connection
+    socket.emit("roomsList", getPublicRoomsInfo());
+
+    socket.on("disconnect", () => {
+      console.log(`User disconnected from main namespace: ${socket.id}`);
+    });
+  });
 
   // Handle different room namespaces
   io.of(/^\/.*$/).on("connection", (socket) => {
@@ -72,6 +95,9 @@ app.prepare().then(() => {
 
       // Send current room members to all users in the room
       socket.nsp.emit("roomMembers", room.members);
+
+      // Broadcast updated rooms list to main namespace
+      io.emit("roomsList", getPublicRoomsInfo());
     });
 
     // Handle game actions
@@ -109,6 +135,9 @@ app.prepare().then(() => {
 
       // Broadcast game start to all players in the namespace (including sender)
       socket.nsp.emit("gameStarted", { seed });
+
+      // Broadcast updated rooms list to main namespace
+      io.emit("roomsList", getPublicRoomsInfo());
     });
 
     // Handle lines cleared (garbage system)
@@ -171,6 +200,9 @@ app.prepare().then(() => {
         rooms.delete(roomId);
         console.log(`Room ${roomId} deleted (empty)`);
       }
+
+      // Broadcast updated rooms list to main namespace
+      io.emit("roomsList", getPublicRoomsInfo());
     });
 
     // Add more game-specific events here later

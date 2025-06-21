@@ -3,6 +3,7 @@ import { type GameAction } from "@/tetris-game-oop";
 export interface ServerToClientEvents {
   // Room management
   roomMembers: (members: RoomMember[]) => void;
+  roomsList: (rooms: RoomInfo[]) => void;
 
   // Game events - includes username to identify which player's action
   gameAction: (data: { username: string; action: GameAction }) => void;
@@ -49,4 +50,11 @@ export interface Room {
   members: RoomMember[];
   isGameStarted: boolean;
   gameSeed?: number;
+}
+
+export interface RoomInfo {
+  id: string;
+  memberCount: number;
+  isGameStarted: boolean;
+  hostUsername: string;
 }
