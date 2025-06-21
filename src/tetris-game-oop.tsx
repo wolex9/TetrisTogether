@@ -416,7 +416,7 @@ class GameBoard {
   }
 }
 
-class TetrisGame {
+export class TetrisGame {
   private board: GameBoard;
   private currentPiece: Tetromino | null = null;
   private heldPiece: Tetromino | null = null;
