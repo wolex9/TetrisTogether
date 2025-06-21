@@ -7,6 +7,7 @@ import { useGame, type GameAction } from "@/tetris-game-oop";
 import { useAuth } from "@/lib/auth-context";
 import { Socket } from "socket.io-client";
 import type { ServerToClientEvents, ClientToServerEvents } from "@/types/socket";
+import { cn } from "@/lib/utils";
 
 interface LocalTetrisProps {
   socket?: Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -166,7 +167,7 @@ export default function LocalTetris({ socket, seed }: LocalTetrisProps) {
   }, [game, game.getLines(), game.isGameOver(), game.isPausedState(), emitAndDispatch]);
 
   return (
-    <div className="flex min-w-fit flex-shrink-0 gap-4 p-4">
+    <div className={cn("flex min-w-fit flex-shrink-0 gap-4 p-4", game.isGameOver() && "bg-red-400")}>
       <Card>
         <CardHeader>
           <CardTitle>{user.username}&apos;s Tetris</CardTitle>

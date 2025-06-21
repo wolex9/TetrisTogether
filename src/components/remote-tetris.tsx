@@ -6,6 +6,7 @@ import { GameBoard as GameBoardComponent, HoldPiece, NextPieces } from "@/compon
 import { useGame, type GameAction } from "@/tetris-game-oop";
 import { Socket } from "socket.io-client";
 import type { ServerToClientEvents, ClientToServerEvents } from "@/types/socket";
+import { cn } from "@/lib/utils";
 
 interface RemoteTetrisProps {
   socket?: Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -56,7 +57,7 @@ export default function RemoteTetris({ socket, targetUsername, seed }: RemoteTet
   // No keyboard controls or game loop - only responds to socket events
 
   return (
-    <div className="flex min-w-fit flex-shrink-0 gap-4 p-4">
+    <div className={cn("flex min-w-fit flex-shrink-0 gap-4 p-4", game.isGameOver() && "bg-red-400")}>
       <Card>
         <CardHeader>
           <CardTitle>{targetUsername}&apos;s Tetris</CardTitle>
